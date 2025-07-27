@@ -158,7 +158,7 @@ export function PostCard({
         
         {videoUrl && (
           <div 
-            className="mb-3 rounded-lg overflow-hidden bg-black relative group max-w-full"
+            className="mb-3 rounded-lg overflow-hidden bg-black relative group max-w-full mx-auto"
             style={{
               aspectRatio: videoAspectRatio || '16/9',
               maxHeight: '500px'
