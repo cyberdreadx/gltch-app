@@ -124,7 +124,12 @@ export function PostCard({
         {/* Post Title */}
         <div className="mb-2">
           <h2 className="font-semibold text-foreground text-sm leading-tight break-words max-w-full">
-            {isExpanded ? title : `${title.slice(0, 150)}${title.length > 150 ? '...' : ''}`}
+            {isExpanded ? title : (() => {
+              if (title.length <= 150) return title;
+              const truncated = title.slice(0, 150);
+              const lastSpaceIndex = truncated.lastIndexOf(' ');
+              return lastSpaceIndex > 0 ? truncated.slice(0, lastSpaceIndex) + '...' : truncated + '...';
+            })()}
           </h2>
           {title.length > 150 && (
             <button
@@ -143,7 +148,12 @@ export function PostCard({
         {content && (
           <div className="mb-3">
             <p className="text-sm text-foreground break-words max-w-full">
-              {showFullContent ? content : `${content.slice(0, 200)}${content.length > 200 ? '...' : ''}`}
+              {showFullContent ? content : (() => {
+                if (content.length <= 200) return content;
+                const truncated = content.slice(0, 200);
+                const lastSpaceIndex = truncated.lastIndexOf(' ');
+                return lastSpaceIndex > 0 ? truncated.slice(0, lastSpaceIndex) + '...' : truncated + '...';
+              })()}
             </p>
             {content.length > 200 && (
               <button

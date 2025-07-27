@@ -268,10 +268,12 @@ const Index = () => {
                            {profileData?.description && (
                              <div className="mt-2 max-w-full">
                                <p className="text-sm text-foreground break-words max-w-full">
-                                 {showFullDescription 
-                                   ? profileData.description 
-                                   : `${profileData.description.slice(0, 100)}${profileData.description.length > 100 ? '...' : ''}`
-                                 }
+                                 {showFullDescription ? profileData.description : (() => {
+                                   if (profileData.description.length <= 100) return profileData.description;
+                                   const truncated = profileData.description.slice(0, 100);
+                                   const lastSpaceIndex = truncated.lastIndexOf(' ');
+                                   return lastSpaceIndex > 0 ? truncated.slice(0, lastSpaceIndex) + '...' : truncated + '...';
+                                 })()}
                                </p>
                                {profileData.description.length > 100 && (
                                  <button
