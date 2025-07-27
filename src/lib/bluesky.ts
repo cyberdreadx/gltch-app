@@ -70,14 +70,15 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
     const image = post.record.embed.images[0];
     const imageRef = image?.image?.ref?.$link;
     if (imageRef) {
-      // Use the proper AT Protocol blob resolution URL
-      imageUrl = `https://bsky.social/xrpc/com.atproto.sync.getBlob?did=${post.author.did}&cid=${imageRef}`;
+      // Use Bluesky's public CDN for images
+      imageUrl = `https://cdn.bsky.app/img/feed_thumbnail/plain/${post.author.did}/${imageRef}@jpeg`;
       mediaAlt = image.alt;
     }
   } else if (post.record?.embed?.video) {
     const videoRef = post.record.embed.video?.ref?.$link;
     if (videoRef) {
-      videoUrl = `https://bsky.social/xrpc/com.atproto.sync.getBlob?did=${post.author.did}&cid=${videoRef}`;
+      // Videos are harder to access, might need authentication
+      videoUrl = `https://cdn.bsky.app/img/feed_thumbnail/plain/${post.author.did}/${videoRef}@jpeg`;
     }
   }
 
