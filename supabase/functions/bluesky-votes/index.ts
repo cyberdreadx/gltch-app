@@ -56,15 +56,12 @@ async function toggleBlueskyLike(session: BlueskySession, postUri: string, actio
   try {
     if (action === 'like') {
       // First get the post to get the CID
-      const postResponse = await fetch(`https://bsky.social/xrpc/app.bsky.feed.getPostThread`, {
+      const postResponse = await fetch(`https://bsky.social/xrpc/app.bsky.feed.getPostThread?uri=${encodeURIComponent(postUri)}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${session.accessJwt}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          uri: postUri,
-        }),
       });
 
       if (!postResponse.ok) {
@@ -163,7 +160,8 @@ serve(async (req) => {
   }
 
   try {
-    const { action, postUris, postUri, session, userId } = await req.json();
+    const requestBody = await req.json();
+    const { action, postUris, postUri, session, userId, voteType } = requestBody;
 
     if (!session || !userId) {
       return new Response(
@@ -211,8 +209,6 @@ serve(async (req) => {
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-
-        const { voteType } = await req.json();
         
         if (voteType === 'up') {
           // Handle upvote: like on Bluesky, update our database
