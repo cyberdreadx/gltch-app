@@ -14,19 +14,30 @@ const Index = () => {
     switch (activeTab) {
       case 'home':
         return (
-          <div className="space-y-0">
-            {mockPosts.map((post) => (
-              <PostCard key={post.id} {...post} />
-            ))}
+          <div className="p-6 text-center">
+            <h2 className="text-xl font-semibold text-foreground mb-2">Welcome to GLTCH</h2>
+            <p className="text-muted-foreground mb-4">No posts yet. Start by creating your first post!</p>
+            <div className="space-y-0">
+              {mockPosts.length > 0 ? (
+                mockPosts.map((post) => (
+                  <PostCard key={post.id} {...post} />
+                ))
+              ) : null}
+            </div>
           </div>
         );
       case 'discover':
         return (
-          <div className="space-y-3 p-3">
-            <h2 className="font-semibold text-lg text-foreground mb-3">Popular Communities</h2>
-            {mockCommunities.map((community) => (
-              <CommunityCard key={community.name} {...community} />
-            ))}
+          <div className="p-6 text-center">
+            <h2 className="text-xl font-semibold text-foreground mb-2">Discover Communities</h2>
+            <p className="text-muted-foreground mb-4">No communities yet. Be the first to create one!</p>
+            <div className="space-y-3">
+              {mockCommunities.length > 0 ? (
+                mockCommunities.map((community) => (
+                  <CommunityCard key={community.name} {...community} />
+                ))
+              ) : null}
+            </div>
           </div>
         );
       case 'post':
@@ -47,7 +58,10 @@ const Index = () => {
         return (
           <div className="p-6 text-center">
             <h2 className="text-xl font-semibold text-foreground mb-2">Profile</h2>
-            <p className="text-muted-foreground">User profile coming soon</p>
+            <p className="text-muted-foreground mb-4">Please sign in to view your profile</p>
+            <button className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90">
+              Sign In
+            </button>
           </div>
         );
       default:
