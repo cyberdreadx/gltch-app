@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { Link } from "react-router-dom";
 import { PostCard } from "@/components/PostCard";
 import { CommunityCard } from "@/components/CommunityCard";
 import { BottomNav } from "@/components/BottomNav";
@@ -313,6 +314,18 @@ const Index = () => {
         return (
           <div className="p-2 md:p-4 lg:p-6 max-w-full overflow-x-hidden">
             <div className="space-y-8">
+              {/* Header with Create Community Button */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-foreground">Discover</h2>
+                {isAuthenticated && (
+                  <Link to="/create-community">
+                    <Button size="sm" className="bg-primary hover:bg-primary/90">
+                      Create Community
+                    </Button>
+                  </Link>
+                )}
+              </div>
+              
               {/* Communities Section */}
               <div>
                 <h2 className="text-xl font-semibold text-foreground mb-4">Popular Communities</h2>
