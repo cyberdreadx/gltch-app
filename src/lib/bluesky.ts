@@ -67,25 +67,33 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
   let mediaAlt: string | undefined;
   
   // Debug logging
-  console.log('Post record:', post.record);
-  console.log('Post embed:', post.record?.embed);
+  console.log('Post embed type:', post.record?.embed?.$type);
   
-  if (post.record?.embed?.images && post.record.embed.images.length > 0) {
-    console.log('Found images:', post.record.embed.images);
+  if (post.record?.embed?.$type === 'app.bsky.embed.images' && post.record.embed.images?.length > 0) {
+    console.log('Found images array with length:', post.record.embed.images.length);
     const image = post.record.embed.images[0];
-    console.log('First image:', image);
-    const imageRef = image?.image?.ref?.$link;
-    console.log('Image ref:', imageRef);
+    console.log('Image object keys:', Object.keys(image));
+    console.log('Image.image keys:', Object.keys(image.image || {}));
+    
+    // Try different ways to access the CID
+    const imageRef = image?.image?.ref?.$link || 
+                    image?.image?.ref?.toString() || 
+                    image?.image?.ref?._baseCache?.get('b') ||
+                    (image?.image?.ref?._baseCache?.get ? image.image.ref._baseCache.get('b') : null);
+    
+    console.log('Extracted image ref:', imageRef);
+    
     if (imageRef) {
       // Use Bluesky's public CDN for images
       imageUrl = `https://cdn.bsky.app/img/feed_thumbnail/plain/${post.author.did}/${imageRef}@jpeg`;
       console.log('Generated image URL:', imageUrl);
       mediaAlt = image.alt;
     }
-  } else if (post.record?.embed?.video) {
-    const videoRef = post.record.embed.video?.ref?.$link;
+  } else if (post.record?.embed?.$type === 'app.bsky.embed.video') {
+    const videoRef = post.record.embed.video?.ref?.$link ||
+                    post.record.embed.video?.ref?.toString() ||
+                    post.record.embed.video?.ref?._baseCache?.get('b');
     if (videoRef) {
-      // Videos are harder to access, might need authentication
       videoUrl = `https://cdn.bsky.app/img/feed_thumbnail/plain/${post.author.did}/${videoRef}@jpeg`;
     }
   }
