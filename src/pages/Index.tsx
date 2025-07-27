@@ -267,9 +267,15 @@ const Index = () => {
                            <p className="text-muted-foreground truncate text-sm max-w-full">@{session?.handle}</p>
                            {profileData?.description && (
                              <div className="mt-2 max-w-full">
-                               <p className={`text-sm text-foreground break-words max-w-full ${
-                                 !showFullDescription ? 'line-clamp-3' : ''
-                               }`}>
+                               <p 
+                                 className="text-sm text-foreground break-words max-w-full"
+                                 style={{
+                                   display: '-webkit-box',
+                                   WebkitLineClamp: showFullDescription ? 'none' : 3,
+                                   WebkitBoxOrient: 'vertical',
+                                   overflow: showFullDescription ? 'visible' : 'hidden'
+                                 }}
+                               >
                                  {profileData.description}
                                </p>
                                {profileData.description.length > 80 && (

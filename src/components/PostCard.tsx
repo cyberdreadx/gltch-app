@@ -123,9 +123,15 @@ export function PostCard({
 
         {/* Post Title */}
         <div className="mb-2">
-          <h2 className={`font-semibold text-foreground text-sm leading-tight break-words max-w-full ${
-            !isExpanded ? 'line-clamp-3' : ''
-          }`}>
+          <h2 
+            className="font-semibold text-foreground text-sm leading-tight break-words max-w-full"
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: isExpanded ? 'none' : 3,
+              WebkitBoxOrient: 'vertical',
+              overflow: isExpanded ? 'visible' : 'hidden'
+            }}
+          >
             {title}
           </h2>
           {title.length > 100 && (
@@ -141,9 +147,15 @@ export function PostCard({
         {/* Post Content */}
         {content && (
           <div className="mb-3">
-            <p className={`text-sm text-foreground break-words max-w-full ${
-              !showFullContent ? 'line-clamp-3' : ''
-            }`}>
+            <p 
+              className="text-sm text-foreground break-words max-w-full"
+              style={{
+                display: '-webkit-box',
+                WebkitLineClamp: showFullContent ? 'none' : 3,
+                WebkitBoxOrient: 'vertical',
+                overflow: showFullContent ? 'visible' : 'hidden'
+              }}
+            >
               {content}
             </p>
             {content.length > 100 && (
