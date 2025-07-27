@@ -30,6 +30,7 @@ export interface TransformedPost {
   mediaAlt?: string;
   authorDisplayName?: string;
   authorAvatar?: string;
+  postUri?: string; // Bluesky post URI for voting
 }
 
 export interface ProfileData {
@@ -116,6 +117,7 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
     mediaAlt,
     authorDisplayName: post.author.displayName,
     authorAvatar: post.author.avatar,
+    postUri: post.uri, // Include Bluesky post URI for voting
   };
 };
 

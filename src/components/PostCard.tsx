@@ -6,6 +6,9 @@ import { cn } from "@/lib/utils";
 import { ImageModal } from "./ImageModal";
 import { renderTextWithHashtags } from "@/utils/hashtag";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { getStoredSession } from "@/lib/atproto";
 
 interface PostCardProps {
   id: string;
@@ -21,6 +24,7 @@ interface PostCardProps {
   mediaAlt?: string;
   authorDisplayName?: string;
   authorAvatar?: string;
+  postUri?: string; // Bluesky post URI for voting
 }
 
 export function PostCard({
@@ -36,26 +40,102 @@ export function PostCard({
   mediaAlt,
   authorDisplayName,
   authorAvatar,
+  postUri,
 }: PostCardProps) {
+  const { session } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [voteState, setVoteState] = useState<'up' | 'down' | null>(null);
   const [upvotes, setUpvotes] = useState(initialUpvotes);
   const [showImageModal, setShowImageModal] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
 
-  const handleVote = (type: 'up' | 'down') => {
-    if (voteState === type) {
-      setVoteState(null);
-      setUpvotes(type === 'up' ? upvotes - 1 : upvotes + 1);
-    } else {
-      const previousState = voteState;
-      setVoteState(type);
+  // Check initial vote state when component loads
+  useEffect(() => {
+    const checkInitialVoteState = async () => {
+      if (!postUri || !session) return;
       
-      if (previousState === null) {
-        setUpvotes(type === 'up' ? upvotes + 1 : upvotes - 1);
-      } else {
-        setUpvotes(type === 'up' ? upvotes + 2 : upvotes - 2);
+      const storedSession = getStoredSession();
+      if (!storedSession) return;
+
+      try {
+        const { data } = await supabase.functions.invoke('bluesky-votes', {
+          body: {
+            action: 'checkLikes',
+            postUris: [postUri],
+            session: storedSession,
+            userId: session.did
+          }
+        });
+
+        if (data?.votes?.[postUri]) {
+          const vote = data.votes[postUri];
+          if (vote.hasBlueskyLike) {
+            setVoteState('up');
+          } else if (vote.gltchVote === 'down') {
+            setVoteState('down');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking vote state:', error);
       }
+    };
+
+    checkInitialVoteState();
+  }, [postUri, session]);
+
+  const handleVote = async (type: 'up' | 'down') => {
+    if (!postUri || !session || loading) return;
+    
+    const storedSession = getStoredSession();
+    if (!storedSession) return;
+
+    setLoading(true);
+    
+    try {
+      // Optimistic update
+      const previousState = voteState;
+      if (voteState === type) {
+        setVoteState(null);
+        setUpvotes(type === 'up' ? upvotes - 1 : upvotes + 1);
+      } else {
+        setVoteState(type);
+        if (previousState === null) {
+          setUpvotes(type === 'up' ? upvotes + 1 : upvotes - 1);
+        } else {
+          setUpvotes(type === 'up' ? upvotes + 2 : upvotes - 2);
+        }
+      }
+
+      const { data } = await supabase.functions.invoke('bluesky-votes', {
+        body: {
+          action: 'vote',
+          postUri,
+          voteType: type,
+          session: storedSession,
+          userId: session.did
+        }
+      });
+
+      if (!data?.success) {
+        // Revert optimistic update on failure
+        setVoteState(previousState);
+        if (previousState === type) {
+          setUpvotes(type === 'up' ? upvotes + 1 : upvotes - 1);
+        } else {
+          if (previousState === null) {
+            setUpvotes(type === 'up' ? upvotes - 1 : upvotes + 1);
+          } else {
+            setUpvotes(type === 'up' ? upvotes - 2 : upvotes + 2);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error voting:', error);
+      // Revert optimistic update on error
+      setVoteState(voteState);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -196,9 +276,11 @@ export function PostCard({
             size="sm"
             className={cn(
               "h-8 px-2 flex items-center space-x-1",
-              voteState === 'up' && "text-upvote"
+              voteState === 'up' && "text-upvote",
+              loading && "opacity-50 cursor-not-allowed"
             )}
             onClick={() => handleVote('up')}
+            disabled={loading}
           >
             <ArrowUp className="h-4 w-4" />
             <span className="text-xs font-medium">{upvotes}</span>
@@ -209,9 +291,11 @@ export function PostCard({
             size="sm"
             className={cn(
               "h-8 px-2",
-              voteState === 'down' && "text-downvote"
+              voteState === 'down' && "text-downvote",
+              loading && "opacity-50 cursor-not-allowed"
             )}
             onClick={() => handleVote('down')}
+            disabled={loading}
           >
             <ArrowDown className="h-4 w-4" />
           </Button>
