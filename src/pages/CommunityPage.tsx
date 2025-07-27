@@ -6,7 +6,7 @@ import { PostCard } from '@/components/PostCard';
 import { BottomNav } from '@/components/BottomNav';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchTimeline, fetchPublicFeed, TransformedPost } from '@/lib/bluesky';
-import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 interface Community {
   id: string;
@@ -23,7 +23,7 @@ interface Community {
 export function CommunityPage() {
   const { communityName } = useParams<{ communityName: string }>();
   const navigate = useNavigate();
-  const { session, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useSupabaseAuth();
   const [community, setCommunity] = useState<Community | null>(null);
   const [posts, setPosts] = useState<TransformedPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,13 +93,13 @@ export function CommunityPage() {
         setCommunity(communityData);
 
         // Check if user is a member of this community
-        if (isAuthenticated && session?.did && communityData) {
+        if (isAuthenticated && user?.id && communityData) {
           const { data: membershipData } = await supabase
             .from('user_communities')
             .select('id')
-            .eq('user_id', session.did)
+            .eq('user_id', user.id)
             .eq('community_id', communityData.id)
-            .single();
+            .maybeSingle();
           
           setIsMember(!!membershipData);
         }
@@ -123,33 +123,48 @@ export function CommunityPage() {
     };
 
     loadCommunityData();
-  }, [communityName, isAuthenticated, session?.did]);
+  }, [communityName, isAuthenticated, user?.id]);
 
   const handleJoinLeave = async () => {
-    if (!isAuthenticated || !session?.did || !community) return;
+    console.log('Join/Leave clicked. Auth state:', { isAuthenticated, user });
+    
+    if (!isAuthenticated || !user?.id || !community) {
+      console.log('Cannot join: missing auth or community', { isAuthenticated, userId: user?.id, community: !!community });
+      return;
+    }
     
     setIsJoining(true);
     try {
       if (isMember) {
         // Leave community
+        console.log('Leaving community:', community.id, 'for user:', user.id);
         const { error } = await supabase
           .from('user_communities')
           .delete()
-          .eq('user_id', session.did)
+          .eq('user_id', user.id)
           .eq('community_id', community.id);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Leave error:', error);
+          throw error;
+        }
+        console.log('Successfully left community');
         setIsMember(false);
       } else {
         // Join community
+        console.log('Joining community:', community.id, 'for user:', user.id);
         const { error } = await supabase
           .from('user_communities')
           .insert({
-            user_id: session.did,
+            user_id: user.id,
             community_id: community.id
           });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Join error:', error);
+          throw error;
+        }
+        console.log('Successfully joined community');
         setIsMember(true);
       }
     } catch (error) {
