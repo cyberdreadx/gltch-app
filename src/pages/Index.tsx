@@ -632,11 +632,26 @@ const Index = () => {
         />
         
         <div className="flex-1 flex flex-col min-w-0 max-w-full">
-          <header className={`fixed top-0 left-0 right-0 h-12 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0 z-50 transition-all duration-300 ${
+          <header className={`fixed top-0 left-0 right-0 h-12 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0 z-50 transition-all duration-300 ${
             isHeaderVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
           }`}>
-            <SidebarTrigger className="ml-2" />
-            <h1 className="ml-4 font-semibold text-foreground truncate">{getTitle()}</h1>
+            <div className="flex items-center">
+              <SidebarTrigger className="ml-2" />
+              <h1 className="ml-4 font-semibold text-foreground truncate">{getTitle()}</h1>
+            </div>
+            
+            {!isAuthenticated && (
+              <div className="mr-4">
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={() => setShowAuthDialog(true)}
+                  className="h-8 px-3"
+                >
+                  Sign Up
+                </Button>
+              </div>
+            )}
           </header>
           
           <main className="flex-1 pb-20 md:pb-0 overflow-x-hidden max-w-full pt-12">
