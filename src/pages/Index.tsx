@@ -178,7 +178,7 @@ const Index = () => {
             {isLoadingPosts ? (
               <div className="text-center text-muted-foreground">Loading posts...</div>
             ) : posts.length > 0 ? (
-              <div className="space-y-0">
+              <div className="space-y-4">
                 {posts.map((post) => (
                   <PostCard key={post.id} {...post} />
                 ))}
@@ -287,7 +287,7 @@ const Index = () => {
                   {isLoadingUserPosts ? (
                     <div className="text-center text-muted-foreground">Loading your posts...</div>
                   ) : userPosts.length > 0 ? (
-                    <div className="space-y-0">
+                    <div className="space-y-4">
                       {userPosts.map((post) => (
                         <PostCard key={post.id} {...post} />
                       ))}

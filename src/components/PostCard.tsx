@@ -96,7 +96,7 @@ export function PostCard({
   };
 
   return (
-    <Card className="mb-2 bg-card border-border overflow-hidden max-w-full">
+    <Card className="mb-4 bg-card border-border overflow-hidden max-w-full">
       {/* Post Header */}
       <div className="p-3 pb-2 max-w-full overflow-x-hidden">
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
