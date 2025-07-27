@@ -122,9 +122,18 @@ async function toggleBlueskyLike(session: BlueskySession, postUri: string, actio
       const likesData = await likesResponse.json();
       const likeRecord = likesData.feed?.find((item: any) => item.post?.uri === postUri);
 
-      if (!likeRecord?.uri) {
+      if (!likeRecord) {
         console.error('Like record not found for post:', postUri);
         return { success: false, error: 'Like record not found' };
+      }
+
+      // Extract the rkey from the like record URI
+      const likeUri = likeRecord.uri;
+      const rkey = likeUri.split('/').pop();
+
+      if (!rkey) {
+        console.error('Could not extract rkey from like URI:', likeUri);
+        return { success: false, error: 'Invalid like record URI' };
       }
 
       // Delete the like record
@@ -137,7 +146,7 @@ async function toggleBlueskyLike(session: BlueskySession, postUri: string, actio
         body: JSON.stringify({
           repo: session.did,
           collection: 'app.bsky.feed.like',
-          rkey: likeRecord.uri.split('/').pop(),
+          rkey: rkey,
         }),
       });
 
@@ -211,25 +220,50 @@ serve(async (req) => {
         }
         
         if (voteType === 'up') {
-          // Handle upvote: like on Bluesky, update our database
-          const likeResult = await toggleBlueskyLike(session, postUri, 'like');
-          
-          if (likeResult.success) {
-            // Upsert vote in our database
+          // Check if user already has an upvote (like) on this post
+          const { data: existingVote } = await supabase
+            .from('post_votes')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('post_uri', postUri)
+            .single();
+
+          if (existingVote?.vote_type === 'up') {
+            // User is trying to unlike - remove the like and the vote record
+            const unlikeResult = await toggleBlueskyLike(session, postUri, 'unlike');
+            
+            // Remove the vote record from our database
             await supabase
               .from('post_votes')
-              .upsert({
-                user_id: userId,
-                post_uri: postUri,
-                vote_type: 'up',
-                bluesky_like_record: likeResult.recordUri
-              });
+              .delete()
+              .eq('user_id', userId)
+              .eq('post_uri', postUri);
+              
+            return new Response(
+              JSON.stringify({ success: true, action: 'unliked' }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          } else {
+            // User is liking the post
+            const likeResult = await toggleBlueskyLike(session, postUri, 'like');
+            
+            if (likeResult.success) {
+              // Upsert vote in our database
+              await supabase
+                .from('post_votes')
+                .upsert({
+                  user_id: userId,
+                  post_uri: postUri,
+                  vote_type: 'up',
+                  bluesky_like_record: likeResult.recordUri
+                });
+            }
+            
+            return new Response(
+              JSON.stringify({ success: likeResult.success, action: 'liked' }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
           }
-          
-          return new Response(
-            JSON.stringify({ success: likeResult.success }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
           
         } else if (voteType === 'down') {
           // Handle downvote: check if there's a Bluesky like first
