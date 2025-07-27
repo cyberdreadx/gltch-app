@@ -105,36 +105,33 @@ async function toggleBlueskyLike(session: BlueskySession, postUri: string, actio
       const data = await response.json();
       return { success: true, recordUri: data.uri };
     } else {
-      // First find the like record
-      const likesResponse = await fetch(`https://bsky.social/xrpc/app.bsky.feed.getActorLikes`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session.accessJwt}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      // Unlike action - find and delete the like record
+      console.log('Starting unlike process for post:', postUri);
+      
+      // First find the like record from our database
+      const { data: voteRecord } = await supabase
+        .from('post_votes')
+        .select('bluesky_like_record')
+        .eq('user_id', session.did)
+        .eq('post_uri', postUri)
+        .eq('vote_type', 'up')
+        .single();
 
-      if (!likesResponse.ok) {
-        console.error('Failed to get likes:', await likesResponse.text());
-        return { success: false, error: 'Failed to get likes' };
-      }
-
-      const likesData = await likesResponse.json();
-      const likeRecord = likesData.feed?.find((item: any) => item.post?.uri === postUri);
-
-      if (!likeRecord) {
-        console.error('Like record not found for post:', postUri);
-        return { success: false, error: 'Like record not found' };
+      if (!voteRecord?.bluesky_like_record) {
+        console.error('No Bluesky like record found in database for post:', postUri);
+        return { success: false, error: 'No like record found' };
       }
 
       // Extract the rkey from the like record URI
-      const likeUri = likeRecord.uri;
+      const likeUri = voteRecord.bluesky_like_record;
       const rkey = likeUri.split('/').pop();
 
       if (!rkey) {
         console.error('Could not extract rkey from like URI:', likeUri);
         return { success: false, error: 'Invalid like record URI' };
       }
+
+      console.log('Attempting to delete like record with rkey:', rkey);
 
       // Delete the like record
       const deleteResponse = await fetch(`https://bsky.social/xrpc/com.atproto.repo.deleteRecord`, {
@@ -151,10 +148,12 @@ async function toggleBlueskyLike(session: BlueskySession, postUri: string, actio
       });
 
       if (!deleteResponse.ok) {
-        console.error('Failed to delete like:', await deleteResponse.text());
-        return { success: false, error: 'Failed to delete like' };
+        const errorText = await deleteResponse.text();
+        console.error('Failed to delete like:', errorText);
+        return { success: false, error: 'Failed to delete like: ' + errorText };
       }
 
+      console.log('Successfully deleted like record from Bluesky');
       return { success: true };
     }
   } catch (error) {
