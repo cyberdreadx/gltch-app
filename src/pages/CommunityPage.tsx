@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, MessageSquare, Plus } from 'lucide-react';
+import { ArrowLeft, Users, MessageSquare, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/PostCard';
 import { BottomNav } from '@/components/BottomNav';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchTimeline, fetchPublicFeed, TransformedPost } from '@/lib/bluesky';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Community {
   id: string;
@@ -22,6 +23,7 @@ interface Community {
 export function CommunityPage() {
   const { communityName } = useParams<{ communityName: string }>();
   const navigate = useNavigate();
+  const { session, isAuthenticated } = useAuth();
   const [community, setCommunity] = useState<Community | null>(null);
   const [posts, setPosts] = useState<TransformedPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,8 @@ export function CommunityPage() {
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [cursor, setCursor] = useState<string | undefined>();
+  const [isMember, setIsMember] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
 
@@ -88,6 +92,18 @@ export function CommunityPage() {
 
         setCommunity(communityData);
 
+        // Check if user is a member of this community
+        if (isAuthenticated && session?.did && communityData) {
+          const { data: membershipData } = await supabase
+            .from('user_communities')
+            .select('id')
+            .eq('user_id', session.did)
+            .eq('community_id', communityData.id)
+            .single();
+          
+          setIsMember(!!membershipData);
+        }
+
         // For now, if it's the 'feed' community, fetch discover posts
         if (communityName === 'feed') {
           const publicPosts = await fetchPublicFeed(20);
@@ -107,7 +123,41 @@ export function CommunityPage() {
     };
 
     loadCommunityData();
-  }, [communityName]);
+  }, [communityName, isAuthenticated, session?.did]);
+
+  const handleJoinLeave = async () => {
+    if (!isAuthenticated || !session?.did || !community) return;
+    
+    setIsJoining(true);
+    try {
+      if (isMember) {
+        // Leave community
+        const { error } = await supabase
+          .from('user_communities')
+          .delete()
+          .eq('user_id', session.did)
+          .eq('community_id', community.id);
+        
+        if (error) throw error;
+        setIsMember(false);
+      } else {
+        // Join community
+        const { error } = await supabase
+          .from('user_communities')
+          .insert({
+            user_id: session.did,
+            community_id: community.id
+          });
+        
+        if (error) throw error;
+        setIsMember(true);
+      }
+    } catch (error) {
+      console.error('Failed to join/leave community:', error);
+    } finally {
+      setIsJoining(false);
+    }
+  };
 
   // Set up intersection observer for infinite scroll
   useEffect(() => {
@@ -252,10 +302,34 @@ export function CommunityPage() {
 
                   {/* Actions */}
                   <div className="flex items-center space-x-2">
-                    <Button size="sm" className="bg-primary hover:bg-primary/90">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Join Community
-                    </Button>
+                    {isAuthenticated ? (
+                      <Button 
+                        size="sm" 
+                        onClick={handleJoinLeave}
+                        disabled={isJoining}
+                        variant={isMember ? "outline" : "default"}
+                        className={isMember ? "hover:bg-destructive hover:text-destructive-foreground" : "bg-primary hover:bg-primary/90"}
+                      >
+                        {isJoining ? (
+                          "..."
+                        ) : isMember ? (
+                          <>
+                            <Minus className="h-4 w-4 mr-2" />
+                            Leave Community
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Join Community
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <Button size="sm" className="bg-primary hover:bg-primary/90">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Join Community
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm">
                       Create Post
                     </Button>

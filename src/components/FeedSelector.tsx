@@ -38,6 +38,7 @@ export function FeedSelector({ currentFeed, onFeedChange, userCommunities = [] }
     }
   ];
 
+  // Only show communities the user is actually a member of
   const communityFeeds: FeedOption[] = userCommunities.map(community => ({
     id: `g/${community.name}`,
     label: `g/${community.name}`,

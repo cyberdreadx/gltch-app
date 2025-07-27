@@ -287,6 +287,36 @@ const Index = () => {
     loadDiscoverData();
   }, [activeTab]);
 
+  // Load user communities when user is authenticated
+  useEffect(() => {
+    const loadUserCommunities = async () => {
+      if (!isAuthenticated || !session?.did) return;
+      
+      try {
+        const { data: memberships, error } = await supabase
+          .from('user_communities')
+          .select(`
+            communities (
+              name,
+              display_name
+            )
+          `)
+          .eq('user_id', session.did);
+        
+        if (error) {
+          console.error('Failed to load user communities:', error);
+        } else {
+          const communities = memberships?.map(m => m.communities).filter(Boolean) || [];
+          setUserCommunities(communities);
+        }
+      } catch (error) {
+        console.error('Failed to load user communities:', error);
+      }
+    };
+
+    loadUserCommunities();
+  }, [isAuthenticated, session?.did]);
+
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
