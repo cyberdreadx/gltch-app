@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface CommunityCardProps {
   name: string;
@@ -11,7 +12,8 @@ interface CommunityCardProps {
 
 export function CommunityCard({ name, description, members, iconUrl }: CommunityCardProps) {
   return (
-    <Card className="p-4 bg-card border-border">
+    <Link to={`/g/${name}`} className="block">
+      <Card className="p-4 bg-card border-border hover:bg-muted/30 transition-colors duration-200 cursor-pointer">
       <div className="flex items-start space-x-3">
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
           {iconUrl ? (
@@ -37,6 +39,7 @@ export function CommunityCard({ name, description, members, iconUrl }: Community
           </div>
         </div>
       </div>
-    </Card>
+      </Card>
+    </Link>
   );
 }

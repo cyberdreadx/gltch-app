@@ -9,6 +9,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchTimeline, fetchUserPosts, fetchProfile, type TransformedPost, type ProfileData } from "@/lib/bluesky";
+import { supabase } from "@/integrations/supabase/client";
 import { mockPosts, mockCommunities } from "@/data/mockData";
 
 const Index = () => {
@@ -17,6 +18,10 @@ const Index = () => {
   const [posts, setPosts] = useState<TransformedPost[]>([]);
   const [userPosts, setUserPosts] = useState<TransformedPost[]>([]);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [communities, setCommunities] = useState<any[]>([]);
+  const [trendingPosts, setTrendingPosts] = useState<TransformedPost[]>([]);
+  const [isLoadingCommunities, setIsLoadingCommunities] = useState(false);
+  const [isLoadingTrending, setIsLoadingTrending] = useState(false);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isLoadingUserPosts, setIsLoadingUserPosts] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
@@ -220,6 +225,47 @@ const Index = () => {
     };
   }, [isAuthenticated, activeTab, hasMoreUserPosts, isLoadingMoreUserPosts, loadMoreUserPosts]);
 
+  // Load discover page data (communities and trending content)
+  useEffect(() => {
+    const loadDiscoverData = async () => {
+      if (activeTab !== 'discover') return;
+      
+      setIsLoadingCommunities(true);
+      setIsLoadingTrending(true);
+      
+      try {
+        // Fetch communities from database
+        const { data: communitiesData, error: communitiesError } = await supabase
+          .from('communities')
+          .select('*')
+          .order('member_count', { ascending: false })
+          .limit(5);
+        
+        if (communitiesError) {
+          console.error('Failed to load communities:', communitiesError);
+        } else {
+          setCommunities(communitiesData || []);
+        }
+
+        // Fetch trending posts (using timeline for now)
+        try {
+          const timelineData = await fetchTimeline(15);
+          setTrendingPosts(timelineData.posts);
+        } catch (error) {
+          console.log('No trending posts available (not authenticated)');
+          setTrendingPosts([]);
+        }
+      } catch (error) {
+        console.error('Failed to load discover data:', error);
+      } finally {
+        setIsLoadingCommunities(false);
+        setIsLoadingTrending(false);
+      }
+    };
+
+    loadDiscoverData();
+  }, [activeTab]);
+
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
@@ -265,15 +311,67 @@ const Index = () => {
         );
       case 'discover':
         return (
-          <div className="p-6 text-center">
-            <h2 className="text-xl font-semibold text-foreground mb-2">Discover Communities</h2>
-            <p className="text-muted-foreground mb-4">No communities yet. Be the first to create one!</p>
-            <div className="space-y-3">
-              {mockCommunities.length > 0 ? (
-                mockCommunities.map((community) => (
-                  <CommunityCard key={community.name} {...community} />
-                ))
-              ) : null}
+          <div className="p-2 md:p-4 lg:p-6 max-w-full overflow-x-hidden">
+            <div className="space-y-8">
+              {/* Communities Section */}
+              <div>
+                <h2 className="text-xl font-semibold text-foreground mb-4">Popular Communities</h2>
+                {isLoadingCommunities ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="bg-card rounded-lg p-4 animate-pulse">
+                        <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-muted rounded w-1/2"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : communities.length > 0 ? (
+                  <div className="space-y-3">
+                    {communities.map((community) => (
+                      <CommunityCard 
+                        key={community.id} 
+                        name={community.name}
+                        description={community.description || 'A community on GLTCH'}
+                        members={community.member_count}
+                        iconUrl={community.icon_url}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No communities yet. Be the first to create one!</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Trending Posts Section */}
+              <div>
+                <h2 className="text-xl font-semibold text-foreground mb-4">Trending Posts</h2>
+                {isLoadingTrending ? (
+                  <div className="space-y-4">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="bg-card rounded-lg p-4 animate-pulse">
+                        <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-muted rounded w-1/2 mb-2"></div>
+                        <div className="h-3 bg-muted rounded w-2/3"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : trendingPosts.length > 0 ? (
+                  <div className="space-y-4">
+                    {trendingPosts.slice(0, 10).map((post) => (
+                      <PostCard key={post.id} {...post} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">Sign in to see trending posts from the network!</p>
+                    <Button onClick={() => setShowAuthDialog(true)} variant="outline">
+                      Sign In with Bluesky
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         );
