@@ -10,6 +10,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchTimeline, fetchUserPosts, fetchProfile, fetchPublicFeed, type TransformedPost, type ProfileData } from "@/lib/bluesky";
+import { fetchCustomFeed, registerAppUser } from "@/lib/customFeeds";
 import { FeedSelector } from "@/components/FeedSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { mockPosts, mockCommunities } from "@/data/mockData";
@@ -89,8 +90,14 @@ const Index = () => {
     
     try {
       let result: TransformedPost[] = [];
+      let cursor: string | undefined;
       
-      if (feedId === 'g/feed') {
+      // Check if it's a custom GLTCH feed
+      if (['gltch-community', 'trending-gltch', 'hashtag-feeds'].includes(feedId)) {
+        const customFeedResult = await fetchCustomFeed(feedId, 20);
+        result = customFeedResult.posts;
+        cursor = customFeedResult.cursor;
+      } else if (feedId === 'g/feed') {
         // Public discover feed
         result = await fetchPublicFeed(20);
       } else if (feedId === 'following') {
@@ -102,12 +109,33 @@ const Index = () => {
           setHasMorePosts(!!timelineResult.cursor);
         }
       } else if (feedId.startsWith('g/')) {
-        // Community feed - TODO: implement community-specific feeds
-        result = await fetchPublicFeed(20);
+        // Community-specific feed
+        const communityName = feedId.replace('g/', '');
+        
+        // Find community ID
+        const { data: community } = await supabase
+          .from('communities')
+          .select('id')
+          .eq('name', communityName)
+          .single();
+        
+        if (community) {
+          const customFeedResult = await fetchCustomFeed('community-specific', 20, undefined, {
+            communityId: community.id
+          });
+          result = customFeedResult.posts;
+          cursor = customFeedResult.cursor;
+        } else {
+          // Fallback to public feed
+          result = await fetchPublicFeed(20);
+        }
       }
       
       setPosts(result);
-      if (feedId === 'g/feed') {
+      setTimelineCursor(cursor || null);
+      setHasMorePosts(!!cursor);
+      
+      if (feedId === 'g/feed' && !cursor) {
         setHasMorePosts(false); // Public feed doesn't support pagination yet
       }
     } catch (error) {
@@ -204,6 +232,16 @@ const Index = () => {
         setUserPostsCursor(postsData.cursor);
         setHasMoreUserPosts(!!postsData.cursor);
         setProfileData(profile);
+        
+        // Register user as app user for custom feeds
+        if (session.did && session.handle) {
+          await registerAppUser(
+            session.did, 
+            session.handle, 
+            profile.displayName, 
+            profile.avatar
+          );
+        }
       } catch (error) {
         console.error('Failed to load user data:', error);
       } finally {
@@ -215,7 +253,7 @@ const Index = () => {
     if (activeTab === 'profile') {
       loadUserData();
     }
-  }, [isAuthenticated, session?.handle, activeTab]);
+  }, [isAuthenticated, session?.handle, session?.did, activeTab]);
 
   // Set up intersection observer for profile posts infinite scroll
   useEffect(() => {

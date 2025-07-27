@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_users: {
+        Row: {
+          avatar_url: string | null
+          bluesky_did: string
+          bluesky_handle: string
+          created_at: string
+          custom_tags: string[] | null
+          display_name: string | null
+          id: string
+          is_verified: boolean | null
+          joined_at: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bluesky_did: string
+          bluesky_handle: string
+          created_at?: string
+          custom_tags?: string[] | null
+          display_name?: string | null
+          id?: string
+          is_verified?: boolean | null
+          joined_at?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bluesky_did?: string
+          bluesky_handle?: string
+          created_at?: string
+          custom_tags?: string[] | null
+          display_name?: string | null
+          id?: string
+          is_verified?: boolean | null
+          joined_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       communities: {
         Row: {
           banner_url: string | null
@@ -53,6 +92,113 @@ export type Database = {
           name?: string
           post_count?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      community_hashtags: {
+        Row: {
+          boost_factor: number | null
+          community_id: string | null
+          created_at: string
+          hashtag: string
+          id: string
+        }
+        Insert: {
+          boost_factor?: number | null
+          community_id?: string | null
+          created_at?: string
+          hashtag: string
+          id?: string
+        }
+        Update: {
+          boost_factor?: number | null
+          community_id?: string | null
+          created_at?: string
+          hashtag?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_hashtags_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_feeds: {
+        Row: {
+          algorithm_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          name: string
+          settings: Json | null
+          updated_at: string
+        }
+        Insert: {
+          algorithm_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          settings?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          algorithm_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          settings?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      post_engagement: {
+        Row: {
+          bluesky_likes: number | null
+          community_score: number | null
+          created_at: string
+          gltch_downvotes: number | null
+          gltch_upvotes: number | null
+          id: string
+          last_updated: string
+          post_uri: string
+          trending_score: number | null
+        }
+        Insert: {
+          bluesky_likes?: number | null
+          community_score?: number | null
+          created_at?: string
+          gltch_downvotes?: number | null
+          gltch_upvotes?: number | null
+          id?: string
+          last_updated?: string
+          post_uri: string
+          trending_score?: number | null
+        }
+        Update: {
+          bluesky_likes?: number | null
+          community_score?: number | null
+          created_at?: string
+          gltch_downvotes?: number | null
+          gltch_upvotes?: number | null
+          id?: string
+          last_updated?: string
+          post_uri?: string
+          trending_score?: number | null
         }
         Relationships: []
       }

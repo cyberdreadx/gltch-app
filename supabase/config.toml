@@ -1,1 +1,5 @@
 project_id = "hensdtsgoarcmctqwfjl"
+
+[functions.bluesky-votes]
+
+[functions.custom-feed-generator]
