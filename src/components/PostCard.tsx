@@ -132,28 +132,7 @@ export function PostCard({
           <div className="mb-4 relative group">
             <div className="absolute -left-1 top-0 w-1 h-full bg-gradient-to-b from-primary/20 via-primary/50 to-primary/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <p className="text-base text-foreground/90 leading-relaxed break-words max-w-full pl-3 group-hover:pl-4 transition-all duration-300 font-light tracking-wide">
-              {content.split(' ').map((word, index) => {
-                const isHashtag = word.startsWith('#');
-                const isMention = word.startsWith('@');
-                
-                if (isHashtag) {
-                  return (
-                    <span key={index} className="text-primary font-medium hover:text-primary/80 transition-colors cursor-pointer">
-                      {word}{' '}
-                    </span>
-                  );
-                }
-                
-                if (isMention) {
-                  return (
-                    <span key={index} className="text-accent font-medium hover:text-accent/80 transition-colors cursor-pointer">
-                      {word}{' '}
-                    </span>
-                  );
-                }
-                
-                return <span key={index} className="hover:text-foreground transition-colors duration-200">{word} </span>;
-              })}
+              {content}
             </p>
             <div className="absolute bottom-0 left-3 right-0 h-px bg-gradient-to-r from-muted-foreground/10 via-muted-foreground/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
