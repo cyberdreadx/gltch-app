@@ -90,11 +90,15 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
       mediaAlt = image.alt;
     }
   } else if (post.record?.embed?.$type === 'app.bsky.embed.video') {
+    console.log('Found video embed');
     const videoRef = post.record.embed.video?.ref?.$link ||
                     post.record.embed.video?.ref?.toString() ||
                     post.record.embed.video?.ref?._baseCache?.get('b');
+    console.log('Video ref:', videoRef);
     if (videoRef) {
-      videoUrl = `https://cdn.bsky.app/img/feed_thumbnail/plain/${post.author.did}/${videoRef}@jpeg`;
+      // Use AT Protocol blob endpoint for videos
+      videoUrl = `https://bsky.social/xrpc/com.atproto.sync.getBlob?did=${post.author.did}&cid=${videoRef}`;
+      console.log('Generated video URL:', videoUrl);
     }
   }
 
