@@ -39,8 +39,24 @@ export const restoreSession = async (): Promise<boolean> => {
   }
 };
 
+const formatIdentifier = (input: string): string => {
+  // If it contains @, it's an email - use as is
+  if (input.includes('@')) {
+    return input;
+  }
+  
+  // If it contains a dot, it's likely already a full handle
+  if (input.includes('.')) {
+    return input;
+  }
+  
+  // Otherwise, it's a short handle - append .bsky.social
+  return `${input}.bsky.social`;
+};
+
 export const login = async (identifier: string, password: string): Promise<AuthSession> => {
-  const response = await agent.login({ identifier, password });
+  const formattedIdentifier = formatIdentifier(identifier.trim());
+  const response = await agent.login({ identifier: formattedIdentifier, password });
   const session = {
     did: response.data.did,
     handle: response.data.handle,

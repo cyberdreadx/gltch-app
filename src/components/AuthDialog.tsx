@@ -56,11 +56,14 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
             <Input
               id="identifier"
               type="text"
-              placeholder="your.handle.bsky.social"
+              placeholder="username or user@email.com"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               required
             />
+            <p className="text-xs text-muted-foreground">
+              Enter your Bluesky handle (without .bsky.social) or email address
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
