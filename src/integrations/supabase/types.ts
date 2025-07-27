@@ -202,6 +202,36 @@ export type Database = {
         }
         Relationships: []
       }
+      post_votes: {
+        Row: {
+          bluesky_like_record: string | null
+          created_at: string
+          id: string
+          post_uri: string
+          updated_at: string
+          user_id: string
+          vote_type: string
+        }
+        Insert: {
+          bluesky_like_record?: string | null
+          created_at?: string
+          id?: string
+          post_uri: string
+          updated_at?: string
+          user_id: string
+          vote_type: string
+        }
+        Update: {
+          bluesky_like_record?: string | null
+          created_at?: string
+          id?: string
+          post_uri?: string
+          updated_at?: string
+          user_id?: string
+          vote_type?: string
+        }
+        Relationships: []
+      }
       user_communities: {
         Row: {
           community_id: string
