@@ -264,7 +264,7 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Creating Account..." : "Create Account"}
+                  {isLoading ? "Creating Accounts..." : "Create GLTCH + Bluesky Account"}
                 </Button>
               </form>
             </TabsContent>
