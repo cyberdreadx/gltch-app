@@ -17,12 +17,12 @@ export function CommunityCard({ name, description, members, iconUrl }: Community
           {iconUrl ? (
             <img src={iconUrl} alt={name} className="w-8 h-8 rounded-full" />
           ) : (
-            <span className="text-primary font-bold text-sm">r/</span>
+            <span className="text-primary font-bold text-sm">g/</span>
           )}
         </div>
         
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground text-sm">r/{name}</h3>
+          <h3 className="font-semibold text-foreground text-sm">g/{name}</h3>
           <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
             {description}
           </p>

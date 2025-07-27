@@ -51,9 +51,9 @@ export function PostCard({
       <div className="p-3 pb-2">
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
           <div className="flex items-center space-x-1">
-            <span className="font-medium text-primary">r/{community}</span>
+            <span className="font-medium text-primary">g/{community}</span>
             <span>•</span>
-            <span>u/{author}</span>
+            <span>p/{author}</span>
             <span>•</span>
             <span>{timestamp}</span>
           </div>
