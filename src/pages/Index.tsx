@@ -260,12 +260,12 @@ const Index = () => {
                         <div className="text-muted-foreground">Loading profile...</div>
                       ) : (
                         <>
-                          <h2 className="text-xl font-semibold text-foreground">
+                          <h2 className="text-xl font-semibold text-foreground truncate">
                             {profileData?.displayName || session?.handle}
                           </h2>
-                          <p className="text-muted-foreground">@{session?.handle}</p>
+                          <p className="text-muted-foreground truncate">@{session?.handle}</p>
                           {profileData?.description && (
-                            <p className="text-sm text-foreground mt-2">{profileData.description}</p>
+                            <p className="text-sm text-foreground mt-2 line-clamp-3">{profileData.description}</p>
                           )}
                           <div className="flex space-x-4 mt-2 text-sm text-muted-foreground">
                             <span>{profileData?.followersCount || 0} followers</span>

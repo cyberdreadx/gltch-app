@@ -108,7 +108,7 @@ export function PostCard({
                 className="w-4 h-4 rounded-full"
               />
             )}
-            <span className="font-medium text-primary">
+            <span className="font-medium text-primary truncate max-w-[150px]">
               {authorDisplayName ? authorDisplayName : `@${author}`}
             </span>
             <span>•</span>
@@ -120,7 +120,7 @@ export function PostCard({
         </div>
 
         {/* Post Title */}
-        <h2 className="font-semibold text-foreground text-sm leading-tight mb-2 break-words max-w-full">
+        <h2 className="font-semibold text-foreground text-sm leading-tight mb-2 break-words max-w-full line-clamp-3">
           {title}
         </h2>
 
