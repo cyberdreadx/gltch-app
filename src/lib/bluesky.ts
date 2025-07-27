@@ -169,16 +169,28 @@ export const fetchProfile = async (handle: string): Promise<ProfileData> => {
 
 export const fetchPublicFeed = async (limit: number = 30): Promise<TransformedPost[]> => {
   try {
-    // Use discover feed as fallback for unauthenticated users
-    const response = await agent.app.bsky.feed.getFeedSkeleton({
+    // Use Bluesky's "What's Hot" discover feed for public content
+    const response = await agent.app.bsky.feed.getFeed({
       feed: 'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot',
       limit
     });
     
-    // This would need additional resolution, for now return empty
+    if (response.success && response.data.feed) {
+      return response.data.feed.map((item: any) => transformBlueskyPost(item.post));
+    }
+    
     return [];
   } catch (error) {
     console.error('Failed to fetch public feed:', error);
+    // Fallback to timeline if discover feed fails
+    try {
+      const fallbackResponse = await agent.getTimeline({ limit: Math.min(limit, 20) });
+      if (fallbackResponse.success && fallbackResponse.data.feed) {
+        return fallbackResponse.data.feed.map((item: any) => transformBlueskyPost(item.post));
+      }
+    } catch (fallbackError) {
+      console.error('Fallback to timeline also failed:', fallbackError);
+    }
     return [];
   }
 };

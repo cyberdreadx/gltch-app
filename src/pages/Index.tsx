@@ -9,7 +9,7 @@ import { AuthDialog } from "@/components/AuthDialog";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchTimeline, fetchUserPosts, fetchProfile, type TransformedPost, type ProfileData } from "@/lib/bluesky";
+import { fetchTimeline, fetchUserPosts, fetchProfile, fetchPublicFeed, type TransformedPost, type ProfileData } from "@/lib/bluesky";
 import { supabase } from "@/integrations/supabase/client";
 import { mockPosts, mockCommunities } from "@/data/mockData";
 
@@ -42,19 +42,18 @@ const Index = () => {
   const { session, isAuthenticated, logout, refreshSession } = useAuth();
 
   const loadMorePosts = useCallback(async () => {
-    if (!isAuthenticated || isLoadingMore || !hasMorePosts) return;
+    if (isLoadingMore || !hasMorePosts) return;
     
     setIsLoadingMore(true);
     try {
-      const result = await fetchTimeline(5, timelineCursor || undefined);
-      if (result.posts.length === 0) {
+      // Use public feed for discover-style content
+      const result = await fetchPublicFeed(5);
+      if (result.length === 0) {
         setHasMorePosts(false);
       } else {
-        setPosts(prev => [...prev, ...result.posts]);
-        setTimelineCursor(result.cursor || null);
-        if (!result.cursor) {
-          setHasMorePosts(false);
-        }
+        setPosts(prev => [...prev, ...result]);
+        // fetchPublicFeed doesn't use cursor, disable infinite scroll for now
+        setHasMorePosts(false);
       }
     } catch (error) {
       console.error('Failed to load more posts:', error);
@@ -80,21 +79,18 @@ const Index = () => {
   }, [isAuthenticated, session?.handle, userPostsCursor, isLoadingMoreUserPosts, hasMoreUserPosts]);
 
   useEffect(() => {
-    const loadPosts = async () => {
-      if (!isAuthenticated) return;
-      
+    const loadPosts = async () => {      
       setIsLoadingPosts(true);
       setPosts([]);
       setHasMorePosts(true);
       setTimelineCursor(null);
       
       try {
-        const result = await fetchTimeline(5);
-        setPosts(result.posts);
-        setTimelineCursor(result.cursor || null);
-        if (result.posts.length < 5 || !result.cursor) {
-          setHasMorePosts(false);
-        }
+        // Use public feed for main g/feed content
+        const result = await fetchPublicFeed(20);
+        setPosts(result);
+        // fetchPublicFeed doesn't support pagination yet
+        setHasMorePosts(false);
       } catch (error) {
         console.error('Failed to load posts:', error);
       } finally {
@@ -103,7 +99,7 @@ const Index = () => {
     };
 
     loadPosts();
-  }, [isAuthenticated]);
+  }, []);
 
   // Handle scroll direction for header visibility
   useEffect(() => {
@@ -248,12 +244,12 @@ const Index = () => {
           setCommunities(communitiesData || []);
         }
 
-        // Fetch trending posts (using timeline for now)
+        // Fetch trending posts (using public feed for discovery)
         try {
-          const timelineData = await fetchTimeline(15);
-          setTrendingPosts(timelineData.posts);
+          const publicFeedData = await fetchPublicFeed(15);
+          setTrendingPosts(publicFeedData);
         } catch (error) {
-          console.log('No trending posts available (not authenticated)');
+          console.log('No trending posts available');
           setTrendingPosts([]);
         }
       } catch (error) {
@@ -284,7 +280,7 @@ const Index = () => {
 
         return (
           <div className="p-2 md:p-4 lg:p-6 max-w-full overflow-x-hidden">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Your Timeline</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">g/feed</h2>
             {isLoadingPosts ? (
               <div className="text-center text-muted-foreground">Loading posts...</div>
             ) : posts.length > 0 ? (
