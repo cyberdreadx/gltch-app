@@ -174,7 +174,7 @@ const Index = () => {
         }
 
         return (
-          <div className="p-4 sm:p-6 max-w-full overflow-x-hidden">
+          <div className="p-2 md:p-4 lg:p-6 max-w-full overflow-x-hidden">
             <h2 className="text-xl font-semibold text-foreground mb-4">Your Timeline</h2>
             {isLoadingPosts ? (
               <div className="text-center text-muted-foreground">Loading posts...</div>
@@ -231,7 +231,7 @@ const Index = () => {
         );
       case 'profile':
         return (
-          <div className="p-4 sm:p-6 max-w-full overflow-x-hidden">
+          <div className="p-2 md:p-4 lg:p-6 max-w-full overflow-x-hidden">
             {isAuthenticated ? (
               <div className="space-y-6">
                 {/* Profile Header */}

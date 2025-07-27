@@ -75,7 +75,7 @@ export function CommunityPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-2 md:px-6">
         {/* Header skeleton */}
         <div className="bg-muted/50 h-48 animate-pulse"></div>
         <div className="p-4">
@@ -132,7 +132,7 @@ export function CommunityPage() {
         </div>
 
         {/* Community Info */}
-        <div className="relative px-6 pb-6">
+        <div className="relative px-2 md:px-6 pb-6">
           <div className="flex items-start space-x-4 -mt-8">
             {/* Community Icon */}
             <div className="w-16 h-16 bg-background border-4 border-background rounded-xl overflow-hidden flex-shrink-0 shadow-lg">
@@ -191,7 +191,7 @@ export function CommunityPage() {
       </div>
 
       {/* Community Posts */}
-      <div className="px-6 pb-6">
+      <div className="px-2 md:px-6 pb-6">
         <div className="border-t border-border pt-6">
           <h2 className="text-lg font-semibold mb-4">Latest Posts</h2>
           
