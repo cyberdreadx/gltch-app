@@ -23,6 +23,8 @@ const Index = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [timelineCursor, setTimelineCursor] = useState<string | null>(null);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
   const { session, isAuthenticated, logout, refreshSession } = useAuth();
@@ -74,6 +76,30 @@ const Index = () => {
 
     loadPosts();
   }, [isAuthenticated]);
+
+  // Handle scroll direction for header visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY < 10) {
+        // Always show header when near top
+        setIsHeaderVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down and past threshold - hide header
+        setIsHeaderVisible(false);
+      } else if (currentScrollY < lastScrollY) {
+        // Scrolling up - show header
+        setIsHeaderVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   // Set up intersection observer for infinite scroll
   useEffect(() => {
@@ -306,12 +332,14 @@ const Index = () => {
         <AppSidebar activeTab={activeTab} onTabChange={setActiveTab} />
         
         <div className="flex-1 flex flex-col min-w-0 max-w-full">
-          <header className="h-12 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
+          <header className={`fixed top-0 left-0 right-0 h-12 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0 z-50 transition-all duration-300 ${
+            isHeaderVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+          }`}>
             <SidebarTrigger className="ml-2" />
             <h1 className="ml-4 font-semibold text-foreground truncate">{getTitle()}</h1>
           </header>
           
-          <main className="flex-1 pb-20 md:pb-0 overflow-x-hidden max-w-full">
+          <main className="flex-1 pb-20 md:pb-0 overflow-x-hidden max-w-full pt-12">
             {renderContent()}
           </main>
           
