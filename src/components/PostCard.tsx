@@ -131,7 +131,7 @@ export function PostCard({
           {title.length > 100 && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-xs text-primary hover:underline mt-1"
+              className="text-xs text-primary hover:underline mt-1 block"
             >
               {isExpanded ? 'Show less' : 'Show more'}
             </button>
@@ -149,7 +149,7 @@ export function PostCard({
             {content.length > 100 && (
               <button
                 onClick={() => setShowFullContent(!showFullContent)}
-                className="text-xs text-primary hover:underline mt-1"
+                className="text-xs text-primary hover:underline mt-1 block"
               >
                 {showFullContent ? 'Show less' : 'Show more'}
               </button>
