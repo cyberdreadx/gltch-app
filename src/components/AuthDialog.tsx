@@ -50,10 +50,10 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || !identifier || !displayName) {
+    if (!email || !password || !displayName) {
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: "Please fill in email, password, and display name",
         variant: "destructive",
       });
       return;
@@ -70,7 +70,7 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
           emailRedirectTo: redirectUrl,
           data: {
             display_name: displayName,
-            bluesky_handle: identifier.includes('.') ? identifier : `${identifier}.bsky.social`,
+            bluesky_handle: identifier ? (identifier.includes('.') ? identifier : `${identifier}.bsky.social`) : null,
           }
         }
       });
@@ -171,17 +171,16 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="signup-handle">Bluesky Handle</Label>
+                <Label htmlFor="signup-handle">Bluesky Handle (Optional)</Label>
                 <Input
                   id="signup-handle"
                   type="text"
-                  placeholder="username"
+                  placeholder="username (optional)"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Enter your existing Bluesky handle (without .bsky.social)
+                  If you have a Bluesky account, enter your handle (without .bsky.social). You can add this later if you don't have one yet.
                 </p>
               </div>
               <div className="space-y-2">

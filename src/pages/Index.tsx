@@ -9,11 +9,14 @@ import { AuthDialog } from "@/components/AuthDialog";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { fetchTimeline, fetchUserPosts, fetchProfile, fetchPublicFeed, type TransformedPost, type ProfileData } from "@/lib/bluesky";
 import { fetchCustomFeed, registerAppUser } from "@/lib/customFeeds";
 import { FeedSelector } from "@/components/FeedSelector";
+import { ProfileSettings } from "@/components/ProfileSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { mockPosts, mockCommunities } from "@/data/mockData";
+import { ExternalLink, Settings } from "lucide-react";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -44,6 +47,7 @@ const Index = () => {
   const loadingRef = useRef<HTMLDivElement>(null);
   const userPostsLoadingRef = useRef<HTMLDivElement>(null);
   const { session, isAuthenticated, logout, refreshSession } = useAuth();
+  const { user: supabaseUser, profile: supabaseProfile, isAuthenticated: isSupabaseAuthenticated } = useSupabaseAuth();
 
   const loadMorePosts = useCallback(async () => {
     if (isLoadingMore || !hasMorePosts) return;
@@ -358,14 +362,56 @@ const Index = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        if (!isAuthenticated) {
+        if (!isAuthenticated && !isSupabaseAuthenticated) {
           return (
-            <div className="p-6 text-center">
+            <div className="p-6 text-center space-y-4">
               <h2 className="text-xl font-semibold text-foreground mb-2">Welcome to GLTCH</h2>
-              <p className="text-muted-foreground mb-4">Sign in to see your Bluesky timeline</p>
+              <p className="text-muted-foreground mb-4">
+                Join GLTCH to discover communities and connect with the Bluesky network
+              </p>
               <Button onClick={() => setShowAuthDialog(true)}>
-                Sign In with Bluesky
+                Sign Up / Sign In
               </Button>
+            </div>
+          );
+        }
+
+        if (isSupabaseAuthenticated && !isAuthenticated) {
+          return (
+            <div className="p-6 space-y-6">
+              <div className="text-center space-y-4">
+                <h2 className="text-xl font-semibold text-foreground">Welcome to GLTCH!</h2>
+                <p className="text-muted-foreground">
+                  You're signed up for GLTCH! {supabaseProfile?.bluesky_handle ? 
+                    'Connect your Bluesky account to see your timeline.' : 
+                    'Add your Bluesky handle to get the full experience.'}
+                </p>
+                
+                {!supabaseProfile?.bluesky_handle && (
+                  <div className="bg-card border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-primary">
+                      <ExternalLink className="h-4 w-4" />
+                      <span className="text-sm font-medium">Don't have a Bluesky account?</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Create a free Bluesky account to access your timeline and interact with posts.
+                    </p>
+                    <Button asChild variant="outline" size="sm">
+                      <a 
+                        href="https://bsky.app" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2"
+                      >
+                        Create Bluesky Account
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
+              <ProfileSettings />
             </div>
           );
         }
@@ -640,7 +686,7 @@ const Index = () => {
               <h1 className="ml-4 font-semibold text-foreground truncate">{getTitle()}</h1>
             </div>
             
-            {!isAuthenticated && (
+            {!isAuthenticated && !isSupabaseAuthenticated && (
               <div className="mr-4">
                 <Button 
                   variant="default" 
