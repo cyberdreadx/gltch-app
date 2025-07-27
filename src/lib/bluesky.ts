@@ -57,9 +57,9 @@ const formatTimeAgo = (dateString: string): string => {
 
 const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
   const text = post.record?.text || 'No content';
-  // Use first 100 chars as title, rest as content
-  const title = text.length > 100 ? text.substring(0, 100) + '...' : text;
-  const content = text.length > 100 ? text.substring(100) : undefined;
+  // Use full text as title, no artificial truncation
+  const title = text;
+  const content = undefined; // No separate content since we're showing full text as title
   
   // Handle media (images and videos)
   let imageUrl: string | undefined;
