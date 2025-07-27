@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, MessageSquare, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,11 @@ export function CommunityPage() {
   const [posts, setPosts] = useState<TransformedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [cursor, setCursor] = useState<string | undefined>();
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadingRef = useRef<HTMLDivElement>(null);
 
   const handleNavigation = (tab: string) => {
     switch (tab) {
@@ -41,6 +46,24 @@ export function CommunityPage() {
     }
   };
 
+  const loadMorePosts = useCallback(async () => {
+    if (!cursor || isLoadingMore || !hasMorePosts) return;
+    
+    setIsLoadingMore(true);
+    try {
+      if (communityName === 'feed') {
+        const timelineData = await fetchTimeline(10, cursor);
+        setPosts(prevPosts => [...prevPosts, ...timelineData.posts]);
+        setCursor(timelineData.cursor);
+        setHasMorePosts(!!timelineData.cursor);
+      }
+    } catch (error) {
+      console.error('Failed to load more posts:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [communityName, cursor, isLoadingMore, hasMorePosts]);
+
   useEffect(() => {
     if (!communityName) return;
 
@@ -48,6 +71,9 @@ export function CommunityPage() {
       try {
         setLoading(true);
         setError(null);
+        setPosts([]);
+        setHasMorePosts(true);
+        setCursor(undefined);
 
         // Fetch community info
         const { data: communityData, error: communityError } = await supabase
@@ -66,9 +92,12 @@ export function CommunityPage() {
         if (communityName === 'feed') {
           const timelineData = await fetchTimeline(20);
           setPosts(timelineData.posts);
+          setCursor(timelineData.cursor);
+          setHasMorePosts(!!timelineData.cursor);
         } else {
           // For other communities, we'll set empty posts for now
           setPosts([]);
+          setHasMorePosts(false);
         }
       } catch (err) {
         console.error('Failed to load community:', err);
@@ -80,6 +109,35 @@ export function CommunityPage() {
 
     loadCommunityData();
   }, [communityName]);
+
+  // Set up intersection observer for infinite scroll
+  useEffect(() => {
+    if (loading || !hasMorePosts) return;
+
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        const target = entries[0];
+        if (target.isIntersecting && hasMorePosts && !isLoadingMore) {
+          loadMorePosts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadingRef.current) {
+      observerRef.current.observe(loadingRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [loading, hasMorePosts, isLoadingMore, loadMorePosts]);
 
   if (!communityName) {
     return (
@@ -225,6 +283,16 @@ export function CommunityPage() {
                   {posts.map((post) => (
                     <PostCard key={post.id} {...post} />
                   ))}
+                  
+                  {/* Loading indicator for infinite scroll */}
+                  <div ref={loadingRef} className="py-4 text-center">
+                    {isLoadingMore && (
+                      <div className="text-muted-foreground">Loading more posts...</div>
+                    )}
+                    {!hasMorePosts && posts.length > 0 && (
+                      <div className="text-muted-foreground text-sm">You've reached the end</div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
