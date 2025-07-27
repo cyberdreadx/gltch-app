@@ -66,12 +66,20 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
   let videoUrl: string | undefined;
   let mediaAlt: string | undefined;
   
+  // Debug logging
+  console.log('Post record:', post.record);
+  console.log('Post embed:', post.record?.embed);
+  
   if (post.record?.embed?.images && post.record.embed.images.length > 0) {
+    console.log('Found images:', post.record.embed.images);
     const image = post.record.embed.images[0];
+    console.log('First image:', image);
     const imageRef = image?.image?.ref?.$link;
+    console.log('Image ref:', imageRef);
     if (imageRef) {
       // Use Bluesky's public CDN for images
       imageUrl = `https://cdn.bsky.app/img/feed_thumbnail/plain/${post.author.did}/${imageRef}@jpeg`;
+      console.log('Generated image URL:', imageUrl);
       mediaAlt = image.alt;
     }
   } else if (post.record?.embed?.video) {
