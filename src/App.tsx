@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import { HashtagPage } from "./pages/HashtagPage";
 import { CommunityPage } from "./pages/CommunityPage";
 import { CreateCommunityPage } from "./pages/CreateCommunityPage";
+import { UserProfilePage } from "./pages/UserProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/hashtag/:hashtag" element={<HashtagPage />} />
           <Route path="/g/:communityName" element={<CommunityPage />} />
           <Route path="/create-community" element={<CreateCommunityPage />} />
+          <Route path="/user/:handle" element={<UserProfilePage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -197,9 +197,12 @@ export function PostCard({
                 className="w-4 h-4 rounded-full"
               />
             )}
-            <span className="font-medium truncate max-w-[150px]">
+            <Link 
+              to={`/user/${author}`}
+              className="font-medium truncate max-w-[150px] hover:text-primary transition-colors"
+            >
               {authorDisplayName ? authorDisplayName : `@${author}`}
-            </span>
+            </Link>
             <span>•</span>
             <span>{timestamp}</span>
           </div>

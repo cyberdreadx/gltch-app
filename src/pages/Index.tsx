@@ -10,16 +10,19 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchTimeline, fetchUserPosts, fetchProfile, fetchPublicFeed, type TransformedPost, type ProfileData } from "@/lib/bluesky";
+import { FeedSelector } from "@/components/FeedSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { mockPosts, mockCommunities } from "@/data/mockData";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
+  const [currentFeed, setCurrentFeed] = useState('g/feed');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [posts, setPosts] = useState<TransformedPost[]>([]);
   const [userPosts, setUserPosts] = useState<TransformedPost[]>([]);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [communities, setCommunities] = useState<any[]>([]);
+  const [userCommunities, setUserCommunities] = useState<any[]>([]);
   const [trendingPosts, setTrendingPosts] = useState<TransformedPost[]>([]);
   const [isLoadingCommunities, setIsLoadingCommunities] = useState(false);
   const [isLoadingTrending, setIsLoadingTrending] = useState(false);
@@ -78,28 +81,49 @@ const Index = () => {
     }
   }, [isAuthenticated, session?.handle, userPostsCursor, isLoadingMoreUserPosts, hasMoreUserPosts]);
 
-  useEffect(() => {
-    const loadPosts = async () => {      
-      setIsLoadingPosts(true);
-      setPosts([]);
-      setHasMorePosts(true);
-      setTimelineCursor(null);
+  const loadPostsForFeed = useCallback(async (feedId: string) => {
+    setIsLoadingPosts(true);
+    setPosts([]);
+    setHasMorePosts(true);
+    setTimelineCursor(null);
+    
+    try {
+      let result: TransformedPost[] = [];
       
-      try {
-        // Use public feed for main g/feed content
-        const result = await fetchPublicFeed(20);
-        setPosts(result);
-        // fetchPublicFeed doesn't support pagination yet
-        setHasMorePosts(false);
-      } catch (error) {
-        console.error('Failed to load posts:', error);
-      } finally {
-        setIsLoadingPosts(false);
+      if (feedId === 'g/feed') {
+        // Public discover feed
+        result = await fetchPublicFeed(20);
+      } else if (feedId === 'following') {
+        // User's timeline (people they follow)
+        if (isAuthenticated) {
+          const timelineResult = await fetchTimeline(20);
+          result = timelineResult.posts;
+          setTimelineCursor(timelineResult.cursor || null);
+          setHasMorePosts(!!timelineResult.cursor);
+        }
+      } else if (feedId.startsWith('g/')) {
+        // Community feed - TODO: implement community-specific feeds
+        result = await fetchPublicFeed(20);
       }
-    };
+      
+      setPosts(result);
+      if (feedId === 'g/feed') {
+        setHasMorePosts(false); // Public feed doesn't support pagination yet
+      }
+    } catch (error) {
+      console.error('Failed to load posts:', error);
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  }, [isAuthenticated]);
 
-    loadPosts();
-  }, []);
+  useEffect(() => {
+    loadPostsForFeed(currentFeed);
+  }, [currentFeed, loadPostsForFeed]);
+
+  const handleFeedChange = (feedId: string) => {
+    setCurrentFeed(feedId);
+  };
 
   // Handle scroll direction for header visibility
   useEffect(() => {
@@ -280,7 +304,13 @@ const Index = () => {
 
         return (
           <div className="p-2 md:p-4 lg:p-6 max-w-full overflow-x-hidden">
-            <h2 className="text-xl font-semibold text-foreground mb-4">g/feed</h2>
+            <div className="flex items-center justify-between mb-4">
+              <FeedSelector 
+                currentFeed={currentFeed}
+                onFeedChange={handleFeedChange}
+                userCommunities={userCommunities}
+              />
+            </div>
             {isLoadingPosts ? (
               <div className="text-center text-muted-foreground">Loading posts...</div>
             ) : posts.length > 0 ? (
