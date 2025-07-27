@@ -102,6 +102,8 @@ export function PostCard({
       <div className="p-3 pb-2 max-w-full overflow-x-hidden">
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
           <div className="flex items-center space-x-2">
+            <span className="font-medium text-primary">{community}</span>
+            <span>•</span>
             {authorAvatar && (
               <img 
                 src={authorAvatar} 
@@ -109,7 +111,7 @@ export function PostCard({
                 className="w-4 h-4 rounded-full"
               />
             )}
-            <span className="font-medium text-primary truncate max-w-[150px]">
+            <span className="font-medium truncate max-w-[150px]">
               {authorDisplayName ? authorDisplayName : `@${author}`}
             </span>
             <span>•</span>

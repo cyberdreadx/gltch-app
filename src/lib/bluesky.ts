@@ -107,7 +107,7 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
     title,
     content,
     author: post.author.handle,
-    community: 'bluesky',
+    community: 'g/feed',
     timestamp: formatTimeAgo(post.record?.createdAt || post.indexedAt),
     upvotes: post.likeCount || 0,
     comments: post.replyCount || 0,
