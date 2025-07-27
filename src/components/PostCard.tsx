@@ -109,9 +109,8 @@ export function PostCard({
               />
             )}
             <span className="font-medium text-primary">
-              {authorDisplayName || author}
+              {authorDisplayName ? authorDisplayName : `@${author}`}
             </span>
-            <span>@{author}</span>
             <span>•</span>
             <span>{timestamp}</span>
           </div>
