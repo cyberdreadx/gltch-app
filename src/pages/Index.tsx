@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PostCard } from "@/components/PostCard";
 import { CommunityCard } from "@/components/CommunityCard";
 import { BottomNav } from "@/components/BottomNav";
@@ -8,27 +8,65 @@ import { AuthDialog } from "@/components/AuthDialog";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchTimeline, type TransformedPost } from "@/lib/bluesky";
 import { mockPosts, mockCommunities } from "@/data/mockData";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [posts, setPosts] = useState<TransformedPost[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const { session, isAuthenticated, logout, refreshSession } = useAuth();
+
+  useEffect(() => {
+    const loadPosts = async () => {
+      if (!isAuthenticated) return;
+      
+      setIsLoadingPosts(true);
+      try {
+        const timelinePosts = await fetchTimeline();
+        setPosts(timelinePosts);
+      } catch (error) {
+        console.error('Failed to load posts:', error);
+      } finally {
+        setIsLoadingPosts(false);
+      }
+    };
+
+    loadPosts();
+  }, [isAuthenticated]);
 
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return (
-          <div className="p-6 text-center">
-            <h2 className="text-xl font-semibold text-foreground mb-2">Welcome to GLTCH</h2>
-            <p className="text-muted-foreground mb-4">No posts yet. Start by creating your first post!</p>
-            <div className="space-y-0">
-              {mockPosts.length > 0 ? (
-                mockPosts.map((post) => (
-                  <PostCard key={post.id} {...post} />
-                ))
-              ) : null}
+        if (!isAuthenticated) {
+          return (
+            <div className="p-6 text-center">
+              <h2 className="text-xl font-semibold text-foreground mb-2">Welcome to GLTCH</h2>
+              <p className="text-muted-foreground mb-4">Sign in to see your Bluesky timeline</p>
+              <Button onClick={() => setShowAuthDialog(true)}>
+                Sign In with Bluesky
+              </Button>
             </div>
+          );
+        }
+
+        return (
+          <div className="p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Your Timeline</h2>
+            {isLoadingPosts ? (
+              <div className="text-center text-muted-foreground">Loading posts...</div>
+            ) : posts.length > 0 ? (
+              <div className="space-y-0">
+                {posts.map((post) => (
+                  <PostCard key={post.id} {...post} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground">
+                No posts in your timeline yet. Follow some accounts on Bluesky!
+              </div>
+            )}
           </div>
         );
       case 'discover':

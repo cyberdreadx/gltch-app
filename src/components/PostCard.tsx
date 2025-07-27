@@ -14,6 +14,8 @@ interface PostCardProps {
   upvotes: number;
   comments: number;
   imageUrl?: string;
+  authorDisplayName?: string;
+  authorAvatar?: string;
 }
 
 export function PostCard({
@@ -25,6 +27,8 @@ export function PostCard({
   upvotes: initialUpvotes,
   comments,
   imageUrl,
+  authorDisplayName,
+  authorAvatar,
 }: PostCardProps) {
   const [voteState, setVoteState] = useState<'up' | 'down' | null>(null);
   const [upvotes, setUpvotes] = useState(initialUpvotes);
@@ -50,10 +54,18 @@ export function PostCard({
       {/* Post Header */}
       <div className="p-3 pb-2">
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-          <div className="flex items-center space-x-1">
-            <span className="font-medium text-primary">g/{community}</span>
-            <span>•</span>
-            <span>p/{author}</span>
+          <div className="flex items-center space-x-2">
+            {authorAvatar && (
+              <img 
+                src={authorAvatar} 
+                alt={authorDisplayName || author}
+                className="w-4 h-4 rounded-full"
+              />
+            )}
+            <span className="font-medium text-primary">
+              {authorDisplayName || author}
+            </span>
+            <span>@{author}</span>
             <span>•</span>
             <span>{timestamp}</span>
           </div>
