@@ -132,10 +132,13 @@ export const fetchTimeline = async (limit: number = 5, cursor?: string): Promise
   }
 };
 
-export const fetchUserPosts = async (handle: string, limit: number = 5): Promise<TransformedPost[]> => {
+export const fetchUserPosts = async (handle: string, limit: number = 5, cursor?: string): Promise<{ posts: TransformedPost[], cursor?: string }> => {
   try {
-    const response = await agent.getAuthorFeed({ actor: handle, limit });
-    return response.data.feed.map(item => transformBlueskyPost(item.post as BlueskyPost));
+    const response = await agent.getAuthorFeed({ actor: handle, limit, cursor });
+    return {
+      posts: response.data.feed.map(item => transformBlueskyPost(item.post as BlueskyPost)),
+      cursor: response.data.cursor
+    };
   } catch (error) {
     console.error('Failed to fetch user posts:', error);
     throw error;

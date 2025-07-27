@@ -23,11 +23,16 @@ const Index = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [timelineCursor, setTimelineCursor] = useState<string | null>(null);
+  const [hasMoreUserPosts, setHasMoreUserPosts] = useState(true);
+  const [isLoadingMoreUserPosts, setIsLoadingMoreUserPosts] = useState(false);
+  const [userPostsCursor, setUserPostsCursor] = useState<string | undefined>();
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const userPostsObserverRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
+  const userPostsLoadingRef = useRef<HTMLDivElement>(null);
   const { session, isAuthenticated, logout, refreshSession } = useAuth();
 
   const loadMorePosts = useCallback(async () => {
@@ -51,6 +56,22 @@ const Index = () => {
       setIsLoadingMore(false);
     }
   }, [isAuthenticated, isLoadingMore, hasMorePosts, timelineCursor]);
+
+  const loadMoreUserPosts = useCallback(async () => {
+    if (!isAuthenticated || !session?.handle || !userPostsCursor || isLoadingMoreUserPosts || !hasMoreUserPosts) return;
+    
+    setIsLoadingMoreUserPosts(true);
+    try {
+      const data = await fetchUserPosts(session.handle, 10, userPostsCursor);
+      setUserPosts(prevPosts => [...prevPosts, ...data.posts]);
+      setUserPostsCursor(data.cursor);
+      setHasMoreUserPosts(!!data.cursor);
+    } catch (error) {
+      console.error('Failed to load more user posts:', error);
+    } finally {
+      setIsLoadingMoreUserPosts(false);
+    }
+  }, [isAuthenticated, session?.handle, userPostsCursor, isLoadingMoreUserPosts, hasMoreUserPosts]);
 
   useEffect(() => {
     const loadPosts = async () => {
@@ -137,13 +158,18 @@ const Index = () => {
       
       setIsLoadingUserPosts(true);
       setIsLoadingProfile(true);
+      setUserPosts([]);
+      setHasMoreUserPosts(true);
+      setUserPostsCursor(undefined);
       
       try {
-        const [posts, profile] = await Promise.all([
-          fetchUserPosts(session.handle),
+        const [postsData, profile] = await Promise.all([
+          fetchUserPosts(session.handle, 20),
           fetchProfile(session.handle)
         ]);
-        setUserPosts(posts);
+        setUserPosts(postsData.posts);
+        setUserPostsCursor(postsData.cursor);
+        setHasMoreUserPosts(!!postsData.cursor);
         setProfileData(profile);
       } catch (error) {
         console.error('Failed to load user data:', error);
@@ -157,6 +183,35 @@ const Index = () => {
       loadUserData();
     }
   }, [isAuthenticated, session?.handle, activeTab]);
+
+  // Set up intersection observer for profile posts infinite scroll
+  useEffect(() => {
+    if (!isAuthenticated || activeTab !== 'profile') return;
+
+    if (userPostsObserverRef.current) {
+      userPostsObserverRef.current.disconnect();
+    }
+
+    userPostsObserverRef.current = new IntersectionObserver(
+      (entries) => {
+        const target = entries[0];
+        if (target.isIntersecting && hasMoreUserPosts && !isLoadingMoreUserPosts) {
+          loadMoreUserPosts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (userPostsLoadingRef.current) {
+      userPostsObserverRef.current.observe(userPostsLoadingRef.current);
+    }
+
+    return () => {
+      if (userPostsObserverRef.current) {
+        userPostsObserverRef.current.disconnect();
+      }
+    };
+  }, [isAuthenticated, activeTab, hasMoreUserPosts, isLoadingMoreUserPosts, loadMoreUserPosts]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -302,19 +357,29 @@ const Index = () => {
                 {/* Posts Section */}
                 <div>
                   <h3 className="text-lg font-semibold text-foreground mb-4">Your Posts</h3>
-                  {isLoadingUserPosts ? (
-                    <div className="text-center text-muted-foreground">Loading your posts...</div>
-                  ) : userPosts.length > 0 ? (
-                    <div className="space-y-4">
-                      {userPosts.map((post) => (
-                        <PostCard key={post.id} {...post} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center text-muted-foreground">
-                      You haven't posted anything yet. Create your first post on Bluesky!
-                    </div>
-                  )}
+                   {isLoadingUserPosts ? (
+                     <div className="text-center text-muted-foreground">Loading your posts...</div>
+                   ) : userPosts.length > 0 ? (
+                     <div className="space-y-4">
+                       {userPosts.map((post) => (
+                         <PostCard key={post.id} {...post} />
+                       ))}
+                       
+                       {/* Loading indicator for infinite scroll */}
+                       <div ref={userPostsLoadingRef} className="py-4 text-center">
+                         {isLoadingMoreUserPosts && (
+                           <div className="text-muted-foreground">Loading more posts...</div>
+                         )}
+                         {!hasMoreUserPosts && userPosts.length > 0 && (
+                           <div className="text-muted-foreground text-sm">You've reached the end</div>
+                         )}
+                       </div>
+                     </div>
+                   ) : (
+                     <div className="text-center text-muted-foreground">
+                       You haven't posted anything yet. Create your first post on Bluesky!
+                     </div>
+                   )}
                 </div>
               </div>
             ) : (
