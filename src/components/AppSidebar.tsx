@@ -1,5 +1,6 @@
-import { Home, Search, Plus, Mail, User, Moon, Sun, Settings } from "lucide-react";
+import { Home, Search, Plus, Mail, User, Moon, Sun, Settings, Hash, Users } from "lucide-react";
 import { useTheme } from "next-themes";
+import { Link } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -21,12 +22,19 @@ const navigationItems = [
   { title: "Profile", icon: User, tab: "profile" },
 ];
 
+interface Community {
+  name: string;
+  display_name: string;
+}
+
 interface AppSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  userCommunities: Community[];
+  isAuthenticated: boolean;
 }
 
-export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
+export function AppSidebar({ activeTab, onTabChange, userCommunities, isAuthenticated }: AppSidebarProps) {
   const { state } = useSidebar();
   const { theme, setTheme } = useTheme();
 
@@ -66,6 +74,34 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Communities Section */}
+        {isAuthenticated && userCommunities.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              {state !== "collapsed" && "Communities"}
+            </SidebarGroupLabel>
+            
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {userCommunities.map((community) => (
+                  <SidebarMenuItem key={community.name}>
+                    <SidebarMenuButton asChild>
+                      <Link to={`/g/${community.name}`} className="hover:bg-muted/50">
+                        <Hash className="h-4 w-4" />
+                        {state !== "collapsed" && (
+                          <span className="truncate">
+                            g/{community.name}
+                          </span>
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel>

@@ -586,7 +586,12 @@ const Index = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen bg-background flex w-full max-w-full overflow-x-hidden">
-        <AppSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <AppSidebar 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
+          userCommunities={userCommunities}
+          isAuthenticated={isAuthenticated}
+        />
         
         <div className="flex-1 flex flex-col min-w-0 max-w-full">
           <header className={`fixed top-0 left-0 right-0 h-12 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0 z-50 transition-all duration-300 ${
