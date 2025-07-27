@@ -267,17 +267,16 @@ const Index = () => {
                            <p className="text-muted-foreground truncate text-sm max-w-full">@{session?.handle}</p>
                            {profileData?.description && (
                              <div className="mt-2 max-w-full">
-                               <p 
-                                 className={`text-sm text-foreground break-words max-w-full ${
-                                   showFullDescription ? '' : 'line-clamp-3'
-                                 }`}
-                               >
-                                 {profileData.description}
+                               <p className="text-sm text-foreground break-words max-w-full">
+                                 {showFullDescription 
+                                   ? profileData.description 
+                                   : `${profileData.description.slice(0, 100)}${profileData.description.length > 100 ? '...' : ''}`
+                                 }
                                </p>
-                               {profileData.description.length > 80 && (
+                               {profileData.description.length > 100 && (
                                  <button
                                    onClick={() => setShowFullDescription(!showFullDescription)}
-                                   className="text-xs text-primary hover:underline mt-1"
+                                   className="text-xs text-primary hover:underline mt-1 block"
                                  >
                                    {showFullDescription ? 'Show less' : 'Show more'}
                                  </button>

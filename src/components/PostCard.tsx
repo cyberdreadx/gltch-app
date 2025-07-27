@@ -123,14 +123,10 @@ export function PostCard({
 
         {/* Post Title */}
         <div className="mb-2">
-          <h2 
-            className={`font-semibold text-foreground text-sm leading-tight break-words max-w-full ${
-              isExpanded ? '' : 'line-clamp-3'
-            }`}
-          >
-            {title}
+          <h2 className="font-semibold text-foreground text-sm leading-tight break-words max-w-full">
+            {isExpanded ? title : `${title.slice(0, 150)}${title.length > 150 ? '...' : ''}`}
           </h2>
-          {title.length > 50 && (
+          {title.length > 150 && (
             <button
               onClick={() => {
                 console.log('Toggle clicked, current state:', isExpanded);
@@ -146,14 +142,10 @@ export function PostCard({
         {/* Post Content */}
         {content && (
           <div className="mb-3">
-            <p 
-              className={`text-sm text-foreground break-words max-w-full ${
-                showFullContent ? '' : 'line-clamp-3'
-              }`}
-            >
-              {content}
+            <p className="text-sm text-foreground break-words max-w-full">
+              {showFullContent ? content : `${content.slice(0, 200)}${content.length > 200 ? '...' : ''}`}
             </p>
-            {content.length > 100 && (
+            {content.length > 200 && (
               <button
                 onClick={() => setShowFullContent(!showFullContent)}
                 className="text-xs text-primary hover:underline mt-1 block"
