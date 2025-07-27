@@ -81,6 +81,16 @@ export const fetchTimeline = async (limit: number = 30): Promise<TransformedPost
   }
 };
 
+export const fetchUserPosts = async (handle: string, limit: number = 30): Promise<TransformedPost[]> => {
+  try {
+    const response = await agent.getAuthorFeed({ actor: handle, limit });
+    return response.data.feed.map(item => transformBlueskyPost(item.post as BlueskyPost));
+  } catch (error) {
+    console.error('Failed to fetch user posts:', error);
+    throw error;
+  }
+};
+
 export const fetchPublicFeed = async (limit: number = 30): Promise<TransformedPost[]> => {
   try {
     // Use discover feed as fallback for unauthenticated users

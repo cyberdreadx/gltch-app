@@ -8,14 +8,16 @@ import { AuthDialog } from "@/components/AuthDialog";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchTimeline, type TransformedPost } from "@/lib/bluesky";
+import { fetchTimeline, fetchUserPosts, type TransformedPost } from "@/lib/bluesky";
 import { mockPosts, mockCommunities } from "@/data/mockData";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [posts, setPosts] = useState<TransformedPost[]>([]);
+  const [userPosts, setUserPosts] = useState<TransformedPost[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  const [isLoadingUserPosts, setIsLoadingUserPosts] = useState(false);
   const { session, isAuthenticated, logout, refreshSession } = useAuth();
 
   useEffect(() => {
@@ -35,6 +37,26 @@ const Index = () => {
 
     loadPosts();
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    const loadUserPosts = async () => {
+      if (!isAuthenticated || !session?.handle) return;
+      
+      setIsLoadingUserPosts(true);
+      try {
+        const posts = await fetchUserPosts(session.handle);
+        setUserPosts(posts);
+      } catch (error) {
+        console.error('Failed to load user posts:', error);
+      } finally {
+        setIsLoadingUserPosts(false);
+      }
+    };
+
+    if (activeTab === 'profile') {
+      loadUserPosts();
+    }
+  }, [isAuthenticated, session?.handle, activeTab]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -99,17 +121,36 @@ const Index = () => {
         );
       case 'profile':
         return (
-          <div className="p-6 text-center">
-            <h2 className="text-xl font-semibold text-foreground mb-2">Profile</h2>
+          <div className="p-6">
             {isAuthenticated ? (
-              <div className="space-y-4">
-                <p className="text-muted-foreground">Welcome back, @{session?.handle}!</p>
-                <Button onClick={logout} variant="outline">
-                  Sign Out
-                </Button>
+              <div className="space-y-6">
+                <div className="text-center space-y-4 pb-6 border-b">
+                  <h2 className="text-xl font-semibold text-foreground">@{session?.handle}</h2>
+                  <Button onClick={logout} variant="outline">
+                    Sign Out
+                  </Button>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Your Posts</h3>
+                  {isLoadingUserPosts ? (
+                    <div className="text-center text-muted-foreground">Loading your posts...</div>
+                  ) : userPosts.length > 0 ? (
+                    <div className="space-y-0">
+                      {userPosts.map((post) => (
+                        <PostCard key={post.id} {...post} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      You haven't posted anything yet. Create your first post on Bluesky!
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="text-center space-y-4">
+                <h2 className="text-xl font-semibold text-foreground mb-2">Profile</h2>
                 <p className="text-muted-foreground mb-4">Please sign in to view your profile</p>
                 <Button onClick={() => setShowAuthDialog(true)}>
                   Sign In with Bluesky
