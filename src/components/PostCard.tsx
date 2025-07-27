@@ -38,6 +38,8 @@ export function PostCard({
   const [voteState, setVoteState] = useState<'up' | 'down' | null>(null);
   const [upvotes, setUpvotes] = useState(initialUpvotes);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showFullContent, setShowFullContent] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
 
@@ -120,15 +122,39 @@ export function PostCard({
         </div>
 
         {/* Post Title */}
-        <h2 className="font-semibold text-foreground text-sm leading-tight mb-2 break-words max-w-full line-clamp-3">
-          {title}
-        </h2>
+        <div className="mb-2">
+          <h2 className={`font-semibold text-foreground text-sm leading-tight break-words max-w-full ${
+            !isExpanded ? 'line-clamp-3' : ''
+          }`}>
+            {title}
+          </h2>
+          {title.length > 150 && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-xs text-primary hover:underline mt-1"
+            >
+              {isExpanded ? 'Show less' : 'Show more'}
+            </button>
+          )}
+        </div>
 
         {/* Post Content */}
         {content && (
-          <p className="text-sm text-foreground mb-3 line-clamp-3 break-words max-w-full">
-            {content}
-          </p>
+          <div className="mb-3">
+            <p className={`text-sm text-foreground break-words max-w-full ${
+              !showFullContent ? 'line-clamp-3' : ''
+            }`}>
+              {content}
+            </p>
+            {content.length > 200 && (
+              <button
+                onClick={() => setShowFullContent(!showFullContent)}
+                className="text-xs text-primary hover:underline mt-1"
+              >
+                {showFullContent ? 'Show less' : 'Show more'}
+              </button>
+            )}
+          </div>
         )}
 
         {/* Post Media */}

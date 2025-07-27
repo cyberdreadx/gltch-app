@@ -25,6 +25,7 @@ const Index = () => {
   const [timelineCursor, setTimelineCursor] = useState<string | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
   const { session, isAuthenticated, logout, refreshSession } = useAuth();
@@ -265,7 +266,21 @@ const Index = () => {
                           </h2>
                           <p className="text-muted-foreground truncate">@{session?.handle}</p>
                           {profileData?.description && (
-                            <p className="text-sm text-foreground mt-2 line-clamp-3">{profileData.description}</p>
+                            <div className="mt-2">
+                              <p className={`text-sm text-foreground ${
+                                !showFullDescription ? 'line-clamp-3' : ''
+                              }`}>
+                                {profileData.description}
+                              </p>
+                              {profileData.description.length > 150 && (
+                                <button
+                                  onClick={() => setShowFullDescription(!showFullDescription)}
+                                  className="text-xs text-primary hover:underline mt-1"
+                                >
+                                  {showFullDescription ? 'Show less' : 'Show more'}
+                                </button>
+                              )}
+                            </div>
                           )}
                           <div className="flex space-x-4 mt-2 text-sm text-muted-foreground">
                             <span>{profileData?.followersCount || 0} followers</span>
