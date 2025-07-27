@@ -134,11 +134,11 @@ export function PostCard({
 
         {/* Post Media */}
         {imageUrl && (
-          <div className="mb-3 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+          <div className="mb-3 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-muted/20">
             <img 
               src={imageUrl} 
               alt={mediaAlt || "Post image"} 
-              className="w-full h-auto max-h-80 object-cover"
+              className="w-full h-auto object-contain max-h-[600px]"
               onClick={() => setShowImageModal(true)}
             />
           </div>
