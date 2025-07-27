@@ -88,12 +88,11 @@ export function CommunityPage() {
 
         setCommunity(communityData);
 
-        // For now, if it's the 'feed' community, fetch Bluesky posts
+        // For now, if it's the 'feed' community, fetch discover posts
         if (communityName === 'feed') {
-          const timelineData = await fetchTimeline(20);
-          setPosts(timelineData.posts);
-          setCursor(timelineData.cursor);
-          setHasMorePosts(!!timelineData.cursor);
+          const publicPosts = await fetchPublicFeed(20);
+          setPosts(publicPosts);
+          setHasMorePosts(false); // Public feed doesn't support pagination yet
         } else {
           // For other communities, we'll set empty posts for now
           setPosts([]);
