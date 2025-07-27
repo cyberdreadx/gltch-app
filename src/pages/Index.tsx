@@ -55,12 +55,12 @@ const Index = () => {
 
   const getTitle = () => {
     switch (activeTab) {
-      case 'home': return 'AT Social';
+      case 'home': return 'GLTCH';
       case 'discover': return 'Discover';
       case 'post': return 'Create Post';
       case 'inbox': return 'Inbox';
       case 'profile': return 'Profile';
-      default: return 'AT Social';
+      default: return 'GLTCH';
     }
   };
 
