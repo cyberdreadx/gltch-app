@@ -25,6 +25,7 @@ const Index = () => {
   const [timelineCursor, setTimelineCursor] = useState<string | null>(null);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
   const { session, isAuthenticated, logout, refreshSession } = useAuth();
@@ -230,7 +231,7 @@ const Index = () => {
         );
       case 'profile':
         return (
-          <div className="p-6">
+          <div className="p-4 sm:p-6 max-w-full overflow-x-hidden">
             {isAuthenticated ? (
               <div className="space-y-6">
                 {/* Profile Header */}
@@ -246,39 +247,56 @@ const Index = () => {
                     </div>
                   )}
                   
-                  {/* Profile Info */}
-                  <div className="flex items-start space-x-4 pb-6 border-b">
-                    {profileData?.avatar && (
-                      <img 
-                        src={profileData.avatar} 
-                        alt="Profile avatar"
-                        className="w-16 h-16 rounded-full"
-                      />
-                    )}
-                    <div className="flex-1">
-                      {isLoadingProfile ? (
-                        <div className="text-muted-foreground">Loading profile...</div>
-                      ) : (
-                        <>
-                          <h2 className="text-xl font-semibold text-foreground">
-                            {profileData?.displayName || session?.handle}
-                          </h2>
-                          <p className="text-muted-foreground">@{session?.handle}</p>
-                          {profileData?.description && (
-                            <p className="text-sm text-foreground mt-2">{profileData.description}</p>
-                          )}
-                          <div className="flex space-x-4 mt-2 text-sm text-muted-foreground">
-                            <span>{profileData?.followersCount || 0} followers</span>
-                            <span>{profileData?.followsCount || 0} following</span>
-                            <span>{profileData?.postsCount || 0} posts</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    <Button onClick={logout} variant="outline">
-                      Sign Out
-                    </Button>
-                  </div>
+                   {/* Profile Info */}
+                   <div className="flex items-start space-x-3 pb-6 border-b max-w-full overflow-x-hidden">
+                     {profileData?.avatar && (
+                       <img 
+                         src={profileData.avatar} 
+                         alt="Profile avatar"
+                         className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex-shrink-0"
+                       />
+                     )}
+                     <div className="flex-1 min-w-0 max-w-full overflow-x-hidden">
+                       {isLoadingProfile ? (
+                         <div className="text-muted-foreground">Loading profile...</div>
+                       ) : (
+                         <>
+                           <h2 className="text-lg sm:text-xl font-semibold text-foreground truncate max-w-full">
+                             {profileData?.displayName || session?.handle}
+                           </h2>
+                           <p className="text-muted-foreground truncate text-sm max-w-full">@{session?.handle}</p>
+                           {profileData?.description && (
+                             <div className="mt-2 max-w-full">
+                               <p className="text-sm text-foreground break-words max-w-full">
+                                 {showFullDescription ? profileData.description : (() => {
+                                   if (profileData.description.length <= 100) return profileData.description;
+                                   const truncated = profileData.description.slice(0, 100);
+                                   const lastSpaceIndex = truncated.lastIndexOf(' ');
+                                   return lastSpaceIndex > 0 ? truncated.slice(0, lastSpaceIndex) + '...' : truncated + '...';
+                                 })()}
+                               </p>
+                               {profileData.description.length > 100 && (
+                                 <button
+                                   onClick={() => setShowFullDescription(!showFullDescription)}
+                                   className="text-xs text-primary hover:underline mt-1 block"
+                                 >
+                                   {showFullDescription ? 'Show less' : 'Show more'}
+                                 </button>
+                               )}
+                             </div>
+                           )}
+                           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground max-w-full">
+                             <span className="whitespace-nowrap">{profileData?.followersCount || 0} followers</span>
+                             <span className="whitespace-nowrap">{profileData?.followsCount || 0} following</span>
+                             <span className="whitespace-nowrap">{profileData?.postsCount || 0} posts</span>
+                           </div>
+                         </>
+                       )}
+                     </div>
+                     <Button onClick={logout} variant="outline" className="flex-shrink-0 text-xs px-2 py-1 h-8">
+                       Sign Out
+                     </Button>
+                   </div>
                 </div>
                 
                 {/* Posts Section */}
