@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { PostCard } from '@/components/PostCard';
 import { BottomNav } from '@/components/BottomNav';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchTimeline, TransformedPost } from '@/lib/bluesky';
+import { fetchTimeline, fetchPublicFeed, TransformedPost } from '@/lib/bluesky';
 
 interface Community {
   id: string;
@@ -52,10 +52,10 @@ export function CommunityPage() {
     setIsLoadingMore(true);
     try {
       if (communityName === 'feed') {
-        const timelineData = await fetchTimeline(10, cursor);
-        setPosts(prevPosts => [...prevPosts, ...timelineData.posts]);
-        setCursor(timelineData.cursor);
-        setHasMorePosts(!!timelineData.cursor);
+        // Use discover feed for g/feed - no cursor support yet
+        const publicPosts = await fetchPublicFeed(10);
+        setPosts(prevPosts => [...prevPosts, ...publicPosts]);
+        setHasMorePosts(false); // Public feed doesn't support pagination yet
       }
     } catch (error) {
       console.error('Failed to load more posts:', error);
