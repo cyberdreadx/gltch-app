@@ -52,6 +52,12 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				upvote: 'hsl(var(--upvote))',
+				downvote: 'hsl(var(--downvote))',
+				reddit: {
+					orange: 'hsl(var(--reddit-orange))',
+					blue: 'hsl(var(--reddit-blue))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
