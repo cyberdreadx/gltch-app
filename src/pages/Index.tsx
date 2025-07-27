@@ -147,7 +147,7 @@ const Index = () => {
         }
 
         return (
-          <div className="p-6">
+          <div className="p-4 sm:p-6 max-w-full overflow-x-hidden">
             <h2 className="text-xl font-semibold text-foreground mb-4">Your Timeline</h2>
             {isLoadingPosts ? (
               <div className="text-center text-muted-foreground">Loading posts...</div>
@@ -302,16 +302,16 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-background flex w-full">
+      <div className="min-h-screen bg-background flex w-full max-w-full overflow-x-hidden">
         <AppSidebar activeTab={activeTab} onTabChange={setActiveTab} />
         
-        <div className="flex-1 flex flex-col">
-          <header className="h-12 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex-1 flex flex-col min-w-0 max-w-full">
+          <header className="h-12 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
             <SidebarTrigger className="ml-2" />
-            <h1 className="ml-4 font-semibold text-foreground">{getTitle()}</h1>
+            <h1 className="ml-4 font-semibold text-foreground truncate">{getTitle()}</h1>
           </header>
           
-          <main className="flex-1 pb-20 md:pb-0">
+          <main className="flex-1 pb-20 md:pb-0 overflow-x-hidden max-w-full">
             {renderContent()}
           </main>
           

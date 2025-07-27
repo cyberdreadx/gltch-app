@@ -96,9 +96,9 @@ export function PostCard({
   };
 
   return (
-    <Card className="mb-2 bg-card border-border overflow-hidden">
+    <Card className="mb-2 bg-card border-border overflow-hidden max-w-full">
       {/* Post Header */}
-      <div className="p-3 pb-2">
+      <div className="p-3 pb-2 max-w-full overflow-x-hidden">
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
           <div className="flex items-center space-x-2">
             {authorAvatar && (
@@ -121,24 +121,24 @@ export function PostCard({
         </div>
 
         {/* Post Title */}
-        <h2 className="font-semibold text-foreground text-sm leading-tight mb-2">
+        <h2 className="font-semibold text-foreground text-sm leading-tight mb-2 break-words max-w-full">
           {title}
         </h2>
 
         {/* Post Content */}
         {content && (
-          <p className="text-sm text-foreground mb-3 line-clamp-3">
+          <p className="text-sm text-foreground mb-3 line-clamp-3 break-words max-w-full">
             {content}
           </p>
         )}
 
         {/* Post Media */}
         {imageUrl && (
-          <div className="mb-3 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-muted/20">
+          <div className="mb-3 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity bg-muted/20 max-w-full">
             <img 
               src={imageUrl} 
               alt={mediaAlt || "Post image"} 
-              className="w-full h-auto object-contain max-h-[600px]"
+              className="w-full h-auto object-contain max-h-[600px] max-w-full"
               onClick={() => setShowImageModal(true)}
             />
           </div>
@@ -146,7 +146,7 @@ export function PostCard({
         
         {videoUrl && (
           <div 
-            className="mb-3 rounded-lg overflow-hidden bg-black relative group"
+            className="mb-3 rounded-lg overflow-hidden bg-black relative group max-w-full"
             style={{
               aspectRatio: videoAspectRatio || '16/9',
               maxHeight: '500px'
@@ -159,7 +159,7 @@ export function PostCard({
               muted
               loop
               playsInline
-              className="w-full h-full object-contain hover-scale transition-transform duration-300"
+              className="w-full h-full object-contain hover-scale transition-transform duration-300 max-w-full"
               preload="metadata"
               onLoadedMetadata={handleVideoLoadedMetadata}
             >
