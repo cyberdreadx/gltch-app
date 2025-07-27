@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, MessageCircle, Share, MoreHorizontal } from "lucide-react";
@@ -38,6 +38,8 @@ export function PostCard({
   const [voteState, setVoteState] = useState<'up' | 'down' | null>(null);
   const [upvotes, setUpvotes] = useState(initialUpvotes);
   const [showImageModal, setShowImageModal] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
 
   const handleVote = (type: 'up' | 'down') => {
     if (voteState === type) {
@@ -52,6 +54,44 @@ export function PostCard({
       } else {
         setUpvotes(type === 'up' ? upvotes + 2 : upvotes - 2);
       }
+    }
+  };
+
+  // Intersection observer for video autoplay
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Video is in view - autoplay
+            video.play().catch(() => {
+              // Autoplay failed, probably due to browser policy
+              console.log('Autoplay prevented');
+            });
+          } else {
+            // Video is out of view - pause
+            video.pause();
+          }
+        });
+      },
+      {
+        threshold: 0.5, // Play when 50% of video is visible
+      }
+    );
+
+    observer.observe(video);
+
+    return () => observer.disconnect();
+  }, [videoUrl]);
+
+  // Handle video metadata loaded to get aspect ratio
+  const handleVideoLoadedMetadata = () => {
+    const video = videoRef.current;
+    if (video) {
+      setVideoAspectRatio(video.videoWidth / video.videoHeight);
     }
   };
 
@@ -105,15 +145,33 @@ export function PostCard({
         )}
         
         {videoUrl && (
-          <div className="mb-3 rounded-lg overflow-hidden">
+          <div 
+            className="mb-3 rounded-lg overflow-hidden bg-black relative group"
+            style={{
+              aspectRatio: videoAspectRatio || '16/9',
+              maxHeight: '500px'
+            }}
+          >
             <video 
+              ref={videoRef}
               src={videoUrl} 
               controls
-              className="w-full h-auto max-h-96"
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-contain hover-scale transition-transform duration-300"
               preload="metadata"
+              onLoadedMetadata={handleVideoLoadedMetadata}
             >
               Your browser does not support video playback.
             </video>
+            
+            {/* Subtle play indicator overlay */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <div className="bg-black/20 rounded-full p-3 backdrop-blur-sm">
+                <div className="w-0 h-0 border-l-[12px] border-l-white border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent ml-1"></div>
+              </div>
+            </div>
           </div>
         )}
       </div>
