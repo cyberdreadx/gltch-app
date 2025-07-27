@@ -123,7 +123,7 @@ export function PostCard({
         <div className="mb-4 relative group">
           <div className="absolute -left-1 top-0 w-1 h-full bg-gradient-to-b from-primary/20 via-primary/50 to-primary/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="pl-3 group-hover:pl-4 transition-all duration-300">
-            <h2 className="font-bold text-lg leading-snug break-words max-w-full bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent mb-2">
+            <h2 className="font-bold text-lg leading-snug break-words max-w-full text-foreground mb-2">
               {title}
             </h2>
             {content && (
