@@ -8,7 +8,7 @@ import { AuthDialog } from "@/components/AuthDialog";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchTimeline, fetchUserPosts, type TransformedPost } from "@/lib/bluesky";
+import { fetchTimeline, fetchUserPosts, fetchProfile, type TransformedPost, type ProfileData } from "@/lib/bluesky";
 import { mockPosts, mockCommunities } from "@/data/mockData";
 
 const Index = () => {
@@ -16,8 +16,10 @@ const Index = () => {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [posts, setPosts] = useState<TransformedPost[]>([]);
   const [userPosts, setUserPosts] = useState<TransformedPost[]>([]);
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isLoadingUserPosts, setIsLoadingUserPosts] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const { session, isAuthenticated, logout, refreshSession } = useAuth();
 
   useEffect(() => {
@@ -39,22 +41,29 @@ const Index = () => {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    const loadUserPosts = async () => {
+    const loadUserData = async () => {
       if (!isAuthenticated || !session?.handle) return;
       
       setIsLoadingUserPosts(true);
+      setIsLoadingProfile(true);
+      
       try {
-        const posts = await fetchUserPosts(session.handle);
+        const [posts, profile] = await Promise.all([
+          fetchUserPosts(session.handle),
+          fetchProfile(session.handle)
+        ]);
         setUserPosts(posts);
+        setProfileData(profile);
       } catch (error) {
-        console.error('Failed to load user posts:', error);
+        console.error('Failed to load user data:', error);
       } finally {
         setIsLoadingUserPosts(false);
+        setIsLoadingProfile(false);
       }
     };
 
     if (activeTab === 'profile') {
-      loadUserPosts();
+      loadUserData();
     }
   }, [isAuthenticated, session?.handle, activeTab]);
 
@@ -124,13 +133,55 @@ const Index = () => {
           <div className="p-6">
             {isAuthenticated ? (
               <div className="space-y-6">
-                <div className="text-center space-y-4 pb-6 border-b">
-                  <h2 className="text-xl font-semibold text-foreground">@{session?.handle}</h2>
-                  <Button onClick={logout} variant="outline">
-                    Sign Out
-                  </Button>
+                {/* Profile Header */}
+                <div className="relative">
+                  {/* Banner Image */}
+                  {profileData?.banner && (
+                    <div className="h-32 w-full rounded-lg overflow-hidden mb-4">
+                      <img 
+                        src={profileData.banner} 
+                        alt="Profile banner"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Profile Info */}
+                  <div className="flex items-start space-x-4 pb-6 border-b">
+                    {profileData?.avatar && (
+                      <img 
+                        src={profileData.avatar} 
+                        alt="Profile avatar"
+                        className="w-16 h-16 rounded-full"
+                      />
+                    )}
+                    <div className="flex-1">
+                      {isLoadingProfile ? (
+                        <div className="text-muted-foreground">Loading profile...</div>
+                      ) : (
+                        <>
+                          <h2 className="text-xl font-semibold text-foreground">
+                            {profileData?.displayName || session?.handle}
+                          </h2>
+                          <p className="text-muted-foreground">@{session?.handle}</p>
+                          {profileData?.description && (
+                            <p className="text-sm text-foreground mt-2">{profileData.description}</p>
+                          )}
+                          <div className="flex space-x-4 mt-2 text-sm text-muted-foreground">
+                            <span>{profileData?.followersCount || 0} followers</span>
+                            <span>{profileData?.followsCount || 0} following</span>
+                            <span>{profileData?.postsCount || 0} posts</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <Button onClick={logout} variant="outline">
+                      Sign Out
+                    </Button>
+                  </div>
                 </div>
                 
+                {/* Posts Section */}
                 <div>
                   <h3 className="text-lg font-semibold text-foreground mb-4">Your Posts</h3>
                   {isLoadingUserPosts ? (

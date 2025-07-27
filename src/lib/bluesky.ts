@@ -26,8 +26,22 @@ export interface TransformedPost {
   upvotes: number;
   comments: number;
   imageUrl?: string;
+  videoUrl?: string;
+  mediaAlt?: string;
   authorDisplayName?: string;
   authorAvatar?: string;
+}
+
+export interface ProfileData {
+  did: string;
+  handle: string;
+  displayName?: string;
+  description?: string;
+  avatar?: string;
+  banner?: string;
+  followsCount?: number;
+  followersCount?: number;
+  postsCount?: number;
 }
 
 const formatTimeAgo = (dateString: string): string => {
@@ -47,12 +61,22 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
   const title = text.length > 100 ? text.substring(0, 100) + '...' : text;
   const content = text.length > 100 ? text.substring(100) : undefined;
   
-  // Get image URL if exists
+  // Handle media (images and videos)
   let imageUrl: string | undefined;
+  let videoUrl: string | undefined;
+  let mediaAlt: string | undefined;
+  
   if (post.record?.embed?.images && post.record.embed.images.length > 0) {
-    const imageRef = post.record.embed.images[0]?.image?.ref?.$link;
+    const image = post.record.embed.images[0];
+    const imageRef = image?.image?.ref?.$link;
     if (imageRef) {
-      imageUrl = `https://cdn.bsky.app/img/feed_thumbnail/plain/${post.author.did}/${imageRef}@jpeg`;
+      imageUrl = `https://cdn.bsky.app/img/feed_fullsize/plain/${post.author.did}/${imageRef}@jpeg`;
+      mediaAlt = image.alt;
+    }
+  } else if (post.record?.embed?.video) {
+    const videoRef = post.record.embed.video?.ref?.$link;
+    if (videoRef) {
+      videoUrl = `https://video.bsky.app/watch/${post.author.did}/${videoRef}/playlist.m3u8`;
     }
   }
 
@@ -61,11 +85,13 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
     title,
     content,
     author: post.author.handle,
-    community: 'bluesky', // All posts are from Bluesky
+    community: 'bluesky',
     timestamp: formatTimeAgo(post.record?.createdAt || post.indexedAt),
     upvotes: post.likeCount || 0,
     comments: post.replyCount || 0,
     imageUrl,
+    videoUrl,
+    mediaAlt,
     authorDisplayName: post.author.displayName,
     authorAvatar: post.author.avatar,
   };
@@ -87,6 +113,26 @@ export const fetchUserPosts = async (handle: string, limit: number = 30): Promis
     return response.data.feed.map(item => transformBlueskyPost(item.post as BlueskyPost));
   } catch (error) {
     console.error('Failed to fetch user posts:', error);
+    throw error;
+  }
+};
+
+export const fetchProfile = async (handle: string): Promise<ProfileData> => {
+  try {
+    const response = await agent.getProfile({ actor: handle });
+    return {
+      did: response.data.did,
+      handle: response.data.handle,
+      displayName: response.data.displayName,
+      description: response.data.description,
+      avatar: response.data.avatar,
+      banner: response.data.banner,
+      followsCount: response.data.followsCount,
+      followersCount: response.data.followersCount,
+      postsCount: response.data.postsCount,
+    };
+  } catch (error) {
+    console.error('Failed to fetch profile:', error);
     throw error;
   }
 };

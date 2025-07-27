@@ -14,6 +14,8 @@ interface PostCardProps {
   upvotes: number;
   comments: number;
   imageUrl?: string;
+  videoUrl?: string;
+  mediaAlt?: string;
   authorDisplayName?: string;
   authorAvatar?: string;
 }
@@ -27,6 +29,8 @@ export function PostCard({
   upvotes: initialUpvotes,
   comments,
   imageUrl,
+  videoUrl,
+  mediaAlt,
   authorDisplayName,
   authorAvatar,
 }: PostCardProps) {
@@ -86,14 +90,27 @@ export function PostCard({
           </p>
         )}
 
-        {/* Post Image */}
+        {/* Post Media */}
         {imageUrl && (
           <div className="mb-3 rounded-lg overflow-hidden">
             <img 
               src={imageUrl} 
-              alt="Post content" 
-              className="w-full h-48 object-cover"
+              alt={mediaAlt || "Post image"} 
+              className="w-full h-auto max-h-96 object-cover"
             />
+          </div>
+        )}
+        
+        {videoUrl && (
+          <div className="mb-3 rounded-lg overflow-hidden">
+            <video 
+              src={videoUrl} 
+              controls
+              className="w-full h-auto max-h-96"
+              preload="metadata"
+            >
+              Your browser does not support video playback.
+            </video>
           </div>
         )}
       </div>
