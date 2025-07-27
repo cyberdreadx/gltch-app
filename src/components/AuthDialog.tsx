@@ -61,9 +61,31 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
       return;
     }
 
+    if (!identifier) {
+      toast({
+        title: "Error", 
+        description: "Please provide a Bluesky handle for your new account",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Sign up with Supabase
+      // First, create Bluesky account
+      const { data: blueskyData, error: blueskyError } = await supabase.functions.invoke('create-bluesky-account', {
+        body: {
+          handle: identifier,
+          email: email,
+          password: password,
+        }
+      });
+
+      if (blueskyError || !blueskyData.success) {
+        throw new Error(blueskyData?.error || 'Failed to create Bluesky account');
+      }
+
+      // Then sign up with Supabase
       const redirectUrl = `${window.location.origin}/`;
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -72,7 +94,11 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
           emailRedirectTo: redirectUrl,
           data: {
             display_name: displayName,
-            bluesky_handle: identifier ? (identifier.includes('.') ? identifier : `${identifier}.bsky.social`) : null,
+            bluesky_handle: blueskyData.handle,
+            bluesky_did: blueskyData.did,
+            is_gltch_native: true,
+            bluesky_access_jwt: blueskyData.accessJwt,
+            bluesky_refresh_jwt: blueskyData.refreshJwt,
           }
         }
       });
@@ -88,7 +114,7 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
       } else if (data.session) {
         toast({
           title: "Success",
-          description: "Account created successfully!",
+          description: "GLTCH and Bluesky accounts created successfully!",
         });
         onSuccess();
         onOpenChange(false);
@@ -97,7 +123,7 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to create account",
+        description: error.message || "Failed to create accounts",
         variant: "destructive",
       });
     } finally {
@@ -203,16 +229,17 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-handle">Bluesky Handle (Optional)</Label>
+                  <Label htmlFor="signup-handle">Choose Your Bluesky Handle</Label>
                   <Input
                     id="signup-handle"
                     type="text"
-                    placeholder="username (optional)"
+                    placeholder="username"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
+                    required
                   />
                   <p className="text-xs text-muted-foreground">
-                    If you have a Bluesky account, enter your handle (without .bsky.social). You can add this later if you don't have one yet.
+                    We'll create a new Bluesky account for you with this handle (username.bsky.social)
                   </p>
                 </div>
                 <div className="space-y-2">

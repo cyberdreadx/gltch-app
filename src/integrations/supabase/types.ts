@@ -236,33 +236,42 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          bluesky_access_jwt: string | null
           bluesky_did: string | null
           bluesky_handle: string | null
+          bluesky_refresh_jwt: string | null
           created_at: string
           display_name: string | null
           id: string
+          is_gltch_native: boolean | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          bluesky_access_jwt?: string | null
           bluesky_did?: string | null
           bluesky_handle?: string | null
+          bluesky_refresh_jwt?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          is_gltch_native?: boolean | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          bluesky_access_jwt?: string | null
           bluesky_did?: string | null
           bluesky_handle?: string | null
+          bluesky_refresh_jwt?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          is_gltch_native?: boolean | null
           updated_at?: string
           user_id?: string
         }
