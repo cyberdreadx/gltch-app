@@ -70,13 +70,14 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
     const image = post.record.embed.images[0];
     const imageRef = image?.image?.ref?.$link;
     if (imageRef) {
-      imageUrl = `https://cdn.bsky.app/img/feed_fullsize/plain/${post.author.did}/${imageRef}@jpeg`;
+      // Use the proper AT Protocol blob resolution URL
+      imageUrl = `https://bsky.social/xrpc/com.atproto.sync.getBlob?did=${post.author.did}&cid=${imageRef}`;
       mediaAlt = image.alt;
     }
   } else if (post.record?.embed?.video) {
     const videoRef = post.record.embed.video?.ref?.$link;
     if (videoRef) {
-      videoUrl = `https://video.bsky.app/watch/${post.author.did}/${videoRef}/playlist.m3u8`;
+      videoUrl = `https://bsky.social/xrpc/com.atproto.sync.getBlob?did=${post.author.did}&cid=${videoRef}`;
     }
   }
 
