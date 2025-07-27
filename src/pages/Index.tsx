@@ -154,8 +154,12 @@ const Index = () => {
 
   useEffect(() => {
     const loadUserData = async () => {
-      if (!isAuthenticated || !session?.handle) return;
+      if (!isAuthenticated || !session?.handle) {
+        console.log('Not authenticated or no handle:', { isAuthenticated, handle: session?.handle });
+        return;
+      }
       
+      console.log('Loading user data for:', session.handle);
       setIsLoadingUserPosts(true);
       setIsLoadingProfile(true);
       setUserPosts([]);
@@ -163,10 +167,13 @@ const Index = () => {
       setUserPostsCursor(undefined);
       
       try {
+        console.log('Fetching user posts and profile...');
         const [postsData, profile] = await Promise.all([
           fetchUserPosts(session.handle, 20),
           fetchProfile(session.handle)
         ]);
+        console.log('User posts loaded:', postsData.posts.length, 'posts');
+        console.log('Profile loaded:', profile);
         setUserPosts(postsData.posts);
         setUserPostsCursor(postsData.cursor);
         setHasMoreUserPosts(!!postsData.cursor);
