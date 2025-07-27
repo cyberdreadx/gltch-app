@@ -70,10 +70,15 @@ export function PostCard({
 
         if (data?.votes?.[postUri]) {
           const vote = data.votes[postUri];
-          if (vote.hasBlueskyLike) {
+          console.log('Vote data for post:', postUri, vote);
+          
+          // Check if user has a vote in our database first (more reliable)
+          if (vote.gltchVote === 'up') {
             setVoteState('up');
           } else if (vote.gltchVote === 'down') {
             setVoteState('down');
+          } else if (vote.hasBlueskyLike) {
+            setVoteState('up');
           }
         }
       } catch (error) {

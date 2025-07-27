@@ -191,11 +191,13 @@ serve(async (req) => {
         const likes = await checkExistingLikes(session, postUris);
         
         // Also get GLTCH votes from database
-        const { data: gltchVotes } = await supabase
+        const { data: gltchVotes, error } = await supabase
           .from('post_votes')
           .select('post_uri, vote_type')
           .eq('user_id', userId)
           .in('post_uri', postUris);
+
+        console.log('Database votes for user:', userId, 'votes:', gltchVotes, 'error:', error);
 
         const votes: Record<string, { hasBlueskyLike: boolean; gltchVote?: string }> = {};
         for (const postUri of postUris) {
@@ -205,6 +207,8 @@ serve(async (req) => {
             gltchVote: gltchVote?.vote_type
           };
         }
+
+        console.log('Final votes response:', votes);
 
         return new Response(
           JSON.stringify({ votes }),
