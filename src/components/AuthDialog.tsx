@@ -21,6 +21,8 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
   const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("signin");
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationEmail, setConfirmationEmail] = useState("");
   const { toast } = useToast();
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -80,10 +82,9 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
       }
 
       if (data.user && !data.session) {
-        toast({
-          title: "Check your email",
-          description: "We've sent you a confirmation link to complete your registration.",
-        });
+        // Show confirmation message in the dialog
+        setConfirmationEmail(email);
+        setShowConfirmation(true);
       } else if (data.session) {
         toast({
           title: "Success",
@@ -91,9 +92,8 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
         });
         onSuccess();
         onOpenChange(false);
+        resetForm();
       }
-      
-      resetForm();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -110,106 +110,139 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
     setPassword("");
     setEmail("");
     setDisplayName("");
+    setShowConfirmation(false);
+    setConfirmationEmail("");
+  };
+
+  const handleDialogChange = (open: boolean) => {
+    if (!open) {
+      resetForm();
+    }
+    onOpenChange(open);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Welcome to GLTCH</DialogTitle>
+          <DialogTitle>
+            {showConfirmation ? "Check Your Email" : "Welcome to GLTCH"}
+          </DialogTitle>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="signin">
-            <form onSubmit={handleSignIn} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signin-identifier">Bluesky Handle or Email</Label>
-                <Input
-                  id="signin-identifier"
-                  type="text"
-                  placeholder="username or user@email.com"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Enter your Bluesky handle (without .bsky.social) or email address
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signin-password">Password</Label>
-                <Input
-                  id="signin-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign In"}
-              </Button>
-            </form>
-          </TabsContent>
-          
-          <TabsContent value="signup">
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-handle">Bluesky Handle (Optional)</Label>
-                <Input
-                  id="signup-handle"
-                  type="text"
-                  placeholder="username (optional)"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  If you have a Bluesky account, enter your handle (without .bsky.social). You can add this later if you don't have one yet.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-displayname">Display Name</Label>
-                <Input
-                  id="signup-displayname"
-                  type="text"
-                  placeholder="Your Display Name"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating Account..." : "Create Account"}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
+        {showConfirmation ? (
+          <div className="space-y-4 text-center">
+            <div className="text-6xl">📧</div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">We sent you a confirmation link</h3>
+              <p className="text-muted-foreground">
+                Check your email at <span className="font-medium">{confirmationEmail}</span> and click the link to complete your registration.
+              </p>
+            </div>
+            <div className="bg-muted/50 p-3 rounded-lg text-sm text-muted-foreground">
+              <p>Didn't receive the email? Check your spam folder or try signing up again.</p>
+            </div>
+            <Button 
+              onClick={() => handleDialogChange(false)} 
+              variant="outline" 
+              className="w-full"
+            >
+              Close
+            </Button>
+          </div>
+        ) : (
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="signin">
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signin-identifier">Bluesky Handle or Email</Label>
+                  <Input
+                    id="signin-identifier"
+                    type="text"
+                    placeholder="username or user@email.com"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter your Bluesky handle (without .bsky.social) or email address
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signin-password">Password</Label>
+                  <Input
+                    id="signin-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Signing in..." : "Sign In"}
+                </Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="signup">
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-handle">Bluesky Handle (Optional)</Label>
+                  <Input
+                    id="signup-handle"
+                    type="text"
+                    placeholder="username (optional)"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    If you have a Bluesky account, enter your handle (without .bsky.social). You can add this later if you don't have one yet.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-displayname">Display Name</Label>
+                  <Input
+                    id="signup-displayname"
+                    type="text"
+                    placeholder="Your Display Name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Creating Account..." : "Create Account"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        )}
       </DialogContent>
     </Dialog>
   );
