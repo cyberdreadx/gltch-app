@@ -55,6 +55,31 @@ async function checkExistingLikes(session: BlueskySession, postUris: string[]) {
 async function toggleBlueskyLike(session: BlueskySession, postUri: string, action: 'like' | 'unlike') {
   try {
     if (action === 'like') {
+      // First get the post to get the CID
+      const postResponse = await fetch(`https://bsky.social/xrpc/app.bsky.feed.getPostThread`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.accessJwt}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          uri: postUri,
+        }),
+      });
+
+      if (!postResponse.ok) {
+        console.error('Failed to get post:', await postResponse.text());
+        return { success: false, error: 'Failed to get post' };
+      }
+
+      const postData = await postResponse.json();
+      const postCid = postData.thread?.post?.cid;
+
+      if (!postCid) {
+        console.error('No CID found for post:', postUri);
+        return { success: false, error: 'No CID found for post' };
+      }
+
       // Create a like record
       const response = await fetch(`https://bsky.social/xrpc/com.atproto.repo.createRecord`, {
         method: 'POST',
@@ -68,29 +93,68 @@ async function toggleBlueskyLike(session: BlueskySession, postUri: string, actio
           record: {
             subject: {
               uri: postUri,
-              cid: '', // We'd need to get the CID from the post, but Bluesky API usually handles this
+              cid: postCid,
             },
             createdAt: new Date().toISOString(),
           },
         }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        return { success: true, recordUri: data.uri };
+      if (!response.ok) {
+        console.error('Failed to create like:', await response.text());
+        return { success: false, error: 'Failed to create like' };
       }
+
+      const data = await response.json();
+      return { success: true, recordUri: data.uri };
     } else {
-      // Unlike - we'd need to find and delete the like record
-      // This is more complex and requires finding the specific like record
-      // For now, return success (implementation can be enhanced later)
+      // First find the like record
+      const likesResponse = await fetch(`https://bsky.social/xrpc/app.bsky.feed.getActorLikes`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.accessJwt}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!likesResponse.ok) {
+        console.error('Failed to get likes:', await likesResponse.text());
+        return { success: false, error: 'Failed to get likes' };
+      }
+
+      const likesData = await likesResponse.json();
+      const likeRecord = likesData.feed?.find((item: any) => item.post?.uri === postUri);
+
+      if (!likeRecord?.uri) {
+        console.error('Like record not found for post:', postUri);
+        return { success: false, error: 'Like record not found' };
+      }
+
+      // Delete the like record
+      const deleteResponse = await fetch(`https://bsky.social/xrpc/com.atproto.repo.deleteRecord`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.accessJwt}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          repo: session.did,
+          collection: 'app.bsky.feed.like',
+          rkey: likeRecord.uri.split('/').pop(),
+        }),
+      });
+
+      if (!deleteResponse.ok) {
+        console.error('Failed to delete like:', await deleteResponse.text());
+        return { success: false, error: 'Failed to delete like' };
+      }
+
       return { success: true };
     }
   } catch (error) {
     console.error('Error toggling Bluesky like:', error);
     return { success: false, error: error.message };
   }
-  
-  return { success: false };
 }
 
 serve(async (req) => {
