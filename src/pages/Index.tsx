@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { PostCard } from "@/components/PostCard";
 import { CommunityCard } from "@/components/CommunityCard";
 import { BottomNav } from "@/components/BottomNav";
@@ -20,16 +20,46 @@ const Index = () => {
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isLoadingUserPosts, setIsLoadingUserPosts] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [timelineCursor, setTimelineCursor] = useState<string | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadingRef = useRef<HTMLDivElement>(null);
   const { session, isAuthenticated, logout, refreshSession } = useAuth();
+
+  const loadMorePosts = useCallback(async () => {
+    if (!isAuthenticated || isLoadingMore || !hasMorePosts) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const newPosts = await fetchTimeline(5);
+      if (newPosts.length === 0) {
+        setHasMorePosts(false);
+      } else {
+        setPosts(prev => [...prev, ...newPosts]);
+      }
+    } catch (error) {
+      console.error('Failed to load more posts:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isAuthenticated, isLoadingMore, hasMorePosts]);
 
   useEffect(() => {
     const loadPosts = async () => {
       if (!isAuthenticated) return;
       
       setIsLoadingPosts(true);
+      setPosts([]);
+      setHasMorePosts(true);
+      setTimelineCursor(null);
+      
       try {
-        const timelinePosts = await fetchTimeline();
+        const timelinePosts = await fetchTimeline(5);
         setPosts(timelinePosts);
+        if (timelinePosts.length < 5) {
+          setHasMorePosts(false);
+        }
       } catch (error) {
         console.error('Failed to load posts:', error);
       } finally {
@@ -39,6 +69,35 @@ const Index = () => {
 
     loadPosts();
   }, [isAuthenticated]);
+
+  // Set up intersection observer for infinite scroll
+  useEffect(() => {
+    if (!isAuthenticated || activeTab !== 'home') return;
+
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        const target = entries[0];
+        if (target.isIntersecting && hasMorePosts && !isLoadingMore) {
+          loadMorePosts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadingRef.current) {
+      observerRef.current.observe(loadingRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [isAuthenticated, activeTab, hasMorePosts, isLoadingMore, loadMorePosts]);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -92,6 +151,16 @@ const Index = () => {
                 {posts.map((post) => (
                   <PostCard key={post.id} {...post} />
                 ))}
+                
+                {/* Loading indicator for infinite scroll */}
+                <div ref={loadingRef} className="py-4 text-center">
+                  {isLoadingMore && (
+                    <div className="text-muted-foreground">Loading more posts...</div>
+                  )}
+                  {!hasMorePosts && posts.length > 0 && (
+                    <div className="text-muted-foreground text-sm">You've reached the end</div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="text-center text-muted-foreground">
