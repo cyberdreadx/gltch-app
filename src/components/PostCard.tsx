@@ -5,6 +5,7 @@ import { ArrowUp, ArrowDown, MessageCircle, Share, MoreHorizontal } from "lucide
 import { cn } from "@/lib/utils";
 import { ImageModal } from "./ImageModal";
 import { renderTextWithHashtags } from "@/utils/hashtag";
+import { Link } from "react-router-dom";
 
 interface PostCardProps {
   id: string;
@@ -102,7 +103,12 @@ export function PostCard({
       <div className="p-3 pb-2 max-w-full overflow-x-hidden">
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
           <div className="flex items-center space-x-2">
-            <span className="font-medium text-primary">{community}</span>
+            <Link 
+              to={`/g/${community.replace('g/', '')}`}
+              className="font-medium text-primary hover:text-primary/80 transition-colors duration-200"
+            >
+              {community}
+            </Link>
             <span>•</span>
             {authorAvatar && (
               <img 
