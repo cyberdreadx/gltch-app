@@ -130,9 +130,12 @@ export function PostCard({
           >
             {title}
           </h2>
-          {title.length > 100 && (
+          {title.length > 50 && (
             <button
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={() => {
+                console.log('Toggle clicked, current state:', isExpanded);
+                setIsExpanded(!isExpanded);
+              }}
               className="text-xs text-primary hover:underline mt-1 block"
             >
               {isExpanded ? 'Show less' : 'Show more'}
