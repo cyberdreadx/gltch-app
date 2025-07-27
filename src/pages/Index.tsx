@@ -3,6 +3,8 @@ import { PostCard } from "@/components/PostCard";
 import { CommunityCard } from "@/components/CommunityCard";
 import { BottomNav } from "@/components/BottomNav";
 import { TopBar } from "@/components/TopBar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { mockPosts, mockCommunities } from "@/data/mockData";
 
 const Index = () => {
@@ -65,15 +67,27 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <TopBar title={getTitle()} />
-      
-      <div className="pb-20">
-        {renderContent()}
+    <SidebarProvider>
+      <div className="min-h-screen bg-background flex w-full">
+        <AppSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        
+        <div className="flex-1 flex flex-col">
+          <header className="h-12 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <SidebarTrigger className="ml-2" />
+            <h1 className="ml-4 font-semibold text-foreground">{getTitle()}</h1>
+          </header>
+          
+          <main className="flex-1 pb-20 md:pb-0">
+            {renderContent()}
+          </main>
+          
+          {/* Show bottom nav only on mobile */}
+          <div className="md:hidden">
+            <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+          </div>
+        </div>
       </div>
-
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-    </div>
+    </SidebarProvider>
   );
 };
 
