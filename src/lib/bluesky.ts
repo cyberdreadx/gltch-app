@@ -119,7 +119,7 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
   };
 };
 
-export const fetchTimeline = async (limit: number = 30): Promise<TransformedPost[]> => {
+export const fetchTimeline = async (limit: number = 5): Promise<TransformedPost[]> => {
   try {
     const response = await agent.getTimeline({ limit });
     return response.data.feed.map(item => transformBlueskyPost(item.post as BlueskyPost));
@@ -129,7 +129,7 @@ export const fetchTimeline = async (limit: number = 30): Promise<TransformedPost
   }
 };
 
-export const fetchUserPosts = async (handle: string, limit: number = 30): Promise<TransformedPost[]> => {
+export const fetchUserPosts = async (handle: string, limit: number = 5): Promise<TransformedPost[]> => {
   try {
     const response = await agent.getAuthorFeed({ actor: handle, limit });
     return response.data.feed.map(item => transformBlueskyPost(item.post as BlueskyPost));

@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, MessageCircle, Share, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ImageModal } from "./ImageModal";
 
 interface PostCardProps {
   id: string;
@@ -36,6 +37,7 @@ export function PostCard({
 }: PostCardProps) {
   const [voteState, setVoteState] = useState<'up' | 'down' | null>(null);
   const [upvotes, setUpvotes] = useState(initialUpvotes);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   const handleVote = (type: 'up' | 'down') => {
     if (voteState === type) {
@@ -92,11 +94,12 @@ export function PostCard({
 
         {/* Post Media */}
         {imageUrl && (
-          <div className="mb-3 rounded-lg overflow-hidden">
+          <div className="mb-3 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
             <img 
               src={imageUrl} 
               alt={mediaAlt || "Post image"} 
-              className="w-full h-auto max-h-96 object-cover"
+              className="w-full h-auto max-h-80 object-cover"
+              onClick={() => setShowImageModal(true)}
             />
           </div>
         )}
@@ -155,6 +158,16 @@ export function PostCard({
           </Button>
         </div>
       </div>
+      
+      {/* Image Modal */}
+      {imageUrl && (
+        <ImageModal
+          src={imageUrl}
+          alt={mediaAlt || "Post image"}
+          isOpen={showImageModal}
+          onClose={() => setShowImageModal(false)}
+        />
+      )}
     </Card>
   );
 }
