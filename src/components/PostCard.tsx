@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, MessageCircle, Share, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ImageModal } from "./ImageModal";
+import { renderTextWithHashtags } from "@/utils/hashtag";
 
 interface PostCardProps {
   id: string;
@@ -123,13 +124,13 @@ export function PostCard({
         <div className="mb-4 relative group">
           <div className="absolute -left-1 top-0 w-1 h-full bg-gradient-to-b from-primary/20 via-primary/50 to-primary/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="pl-3 group-hover:pl-4 transition-all duration-300">
-            <h2 className="font-bold text-sm leading-snug break-words max-w-full text-foreground mb-1">
-              {title}
-            </h2>
+            <div className="font-bold text-sm leading-snug break-words max-w-full text-foreground mb-1">
+              {renderTextWithHashtags(title)}
+            </div>
             {content && (
-              <p className="text-xs text-foreground/90 leading-relaxed break-words max-w-full font-light tracking-wide">
-                {content}
-              </p>
+              <div className="text-xs text-foreground/90 leading-relaxed break-words max-w-full font-light tracking-wide">
+                {renderTextWithHashtags(content)}
+              </div>
             )}
           </div>
           <div className="absolute bottom-0 left-3 right-0 h-px bg-gradient-to-r from-muted-foreground/10 via-muted-foreground/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

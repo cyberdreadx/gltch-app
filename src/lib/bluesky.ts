@@ -177,3 +177,18 @@ export const fetchPublicFeed = async (limit: number = 30): Promise<TransformedPo
     return [];
   }
 };
+
+export const fetchPostsByHashtag = async (hashtag: string, limit: number = 30): Promise<TransformedPost[]> => {
+  try {
+    // Search for posts containing the hashtag
+    const response = await agent.app.bsky.feed.searchPosts({
+      q: `#${hashtag}`,
+      limit
+    });
+    
+    return response.data.posts.map(post => transformBlueskyPost(post as BlueskyPost));
+  } catch (error) {
+    console.error('Failed to fetch posts by hashtag:', error);
+    return [];
+  }
+};
