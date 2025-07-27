@@ -38,7 +38,12 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
     <Sidebar className={state === "collapsed" ? "w-14" : "w-60"}>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-primary font-bold text-lg">
+          <SidebarGroupLabel className="text-primary font-bold text-lg flex items-center">
+            {state !== "collapsed" ? (
+              <img src="/lovable-uploads/7386ab5e-9e67-4103-bc0b-54492e47429a.png" alt="GLTCH" className="h-8 mr-2" />
+            ) : (
+              <img src="/lovable-uploads/7386ab5e-9e67-4103-bc0b-54492e47429a.png" alt="GLTCH" className="h-6" />
+            )}
             {state !== "collapsed" && "GLTCH"}
           </SidebarGroupLabel>
           
