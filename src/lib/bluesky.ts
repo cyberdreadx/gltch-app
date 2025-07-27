@@ -119,10 +119,13 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
   };
 };
 
-export const fetchTimeline = async (limit: number = 5): Promise<TransformedPost[]> => {
+export const fetchTimeline = async (limit: number = 5, cursor?: string): Promise<{ posts: TransformedPost[], cursor?: string }> => {
   try {
-    const response = await agent.getTimeline({ limit });
-    return response.data.feed.map(item => transformBlueskyPost(item.post as BlueskyPost));
+    const response = await agent.getTimeline({ limit, cursor });
+    return {
+      posts: response.data.feed.map(item => transformBlueskyPost(item.post as BlueskyPost)),
+      cursor: response.data.cursor
+    };
   } catch (error) {
     console.error('Failed to fetch timeline:', error);
     throw error;

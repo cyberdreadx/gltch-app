@@ -32,18 +32,22 @@ const Index = () => {
     
     setIsLoadingMore(true);
     try {
-      const newPosts = await fetchTimeline(5);
-      if (newPosts.length === 0) {
+      const result = await fetchTimeline(5, timelineCursor || undefined);
+      if (result.posts.length === 0) {
         setHasMorePosts(false);
       } else {
-        setPosts(prev => [...prev, ...newPosts]);
+        setPosts(prev => [...prev, ...result.posts]);
+        setTimelineCursor(result.cursor || null);
+        if (!result.cursor) {
+          setHasMorePosts(false);
+        }
       }
     } catch (error) {
       console.error('Failed to load more posts:', error);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isAuthenticated, isLoadingMore, hasMorePosts]);
+  }, [isAuthenticated, isLoadingMore, hasMorePosts, timelineCursor]);
 
   useEffect(() => {
     const loadPosts = async () => {
@@ -55,9 +59,10 @@ const Index = () => {
       setTimelineCursor(null);
       
       try {
-        const timelinePosts = await fetchTimeline(5);
-        setPosts(timelinePosts);
-        if (timelinePosts.length < 5) {
+        const result = await fetchTimeline(5);
+        setPosts(result.posts);
+        setTimelineCursor(result.cursor || null);
+        if (result.posts.length < 5 || !result.cursor) {
           setHasMorePosts(false);
         }
       } catch (error) {
