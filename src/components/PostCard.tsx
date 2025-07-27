@@ -128,7 +128,7 @@ export function PostCard({
           }`}>
             {title}
           </h2>
-          {title.length > 150 && (
+          {title.length > 100 && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="text-xs text-primary hover:underline mt-1"
@@ -146,7 +146,7 @@ export function PostCard({
             }`}>
               {content}
             </p>
-            {content.length > 200 && (
+            {content.length > 100 && (
               <button
                 onClick={() => setShowFullContent(!showFullContent)}
                 className="text-xs text-primary hover:underline mt-1"

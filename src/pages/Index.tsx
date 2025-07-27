@@ -272,7 +272,7 @@ const Index = () => {
                               }`}>
                                 {profileData.description}
                               </p>
-                              {profileData.description.length > 150 && (
+                              {profileData.description.length > 80 && (
                                 <button
                                   onClick={() => setShowFullDescription(!showFullDescription)}
                                   className="text-xs text-primary hover:underline mt-1"
