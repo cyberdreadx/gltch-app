@@ -8,9 +8,10 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AuthDialog } from "@/components/AuthDialog";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from "@/hooks/useAuth";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import { fetchTimeline, fetchUserPosts, fetchProfile, fetchPublicFeed, type TransformedPost, type ProfileData } from "@/lib/bluesky";
+import { fetchTimeline, fetchUserPosts, fetchUserReplies, fetchProfile, fetchPublicFeed, type TransformedPost, type ProfileData } from "@/lib/bluesky";
 import { fetchCustomFeed, registerAppUser } from "@/lib/customFeeds";
 import { FeedSelector } from "@/components/FeedSelector";
 import { ProfileSettings } from "@/components/ProfileSettings";
@@ -26,6 +27,7 @@ const Index = () => {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [posts, setPosts] = useState<TransformedPost[]>([]);
   const [userPosts, setUserPosts] = useState<TransformedPost[]>([]);
+  const [userReplies, setUserReplies] = useState<TransformedPost[]>([]);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [communities, setCommunities] = useState<any[]>([]);
   const [userCommunities, setUserCommunities] = useState<any[]>([]);
@@ -34,6 +36,7 @@ const Index = () => {
   const [isLoadingTrending, setIsLoadingTrending] = useState(false);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isLoadingUserPosts, setIsLoadingUserPosts] = useState(false);
+  const [isLoadingUserReplies, setIsLoadingUserReplies] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
@@ -228,13 +231,16 @@ const Index = () => {
       
       try {
         console.log('Fetching user posts and profile...');
-        const [postsData, profile] = await Promise.all([
+        const [postsData, repliesData, profile] = await Promise.all([
           fetchUserPosts(session.handle, 20),
+          fetchUserReplies(session.handle, 20),
           fetchProfile(session.handle)
         ]);
         console.log('User posts loaded:', postsData.posts.length, 'posts');
+        console.log('User replies loaded:', repliesData.posts.length, 'replies');
         console.log('Profile loaded:', profile);
         setUserPosts(postsData.posts);
+        setUserReplies(repliesData.posts);
         setUserPostsCursor(postsData.cursor);
         setHasMoreUserPosts(!!postsData.cursor);
         setProfileData(profile);
@@ -252,6 +258,7 @@ const Index = () => {
         console.error('Failed to load user data:', error);
       } finally {
         setIsLoadingUserPosts(false);
+        setIsLoadingUserReplies(false);
         setIsLoadingProfile(false);
       }
     };
@@ -621,14 +628,19 @@ const Index = () => {
                      </Button>
                    </div>
                 </div>
-                
-                {/* Posts Section */}
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Your Posts</h3>
-                   {isLoadingUserPosts ? (
-                     <div className="text-center text-muted-foreground">Loading your posts...</div>
-                   ) : userPosts.length > 0 ? (
-                     <div className="space-y-4">
+                 
+                {/* Posts and Replies Section */}
+                <Tabs defaultValue="posts" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="posts">Posts</TabsTrigger>
+                    <TabsTrigger value="replies">Replies</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="posts" className="mt-4">
+                    {isLoadingUserPosts ? (
+                      <div className="text-center text-muted-foreground">Loading your posts...</div>
+                    ) : userPosts.length > 0 ? (
+                      <div className="space-y-4">
                         {userPosts.map((post) => (
                           <PostCard 
                             key={post.id} 
@@ -638,23 +650,46 @@ const Index = () => {
                             }}
                           />
                         ))}
-                       
-                       {/* Loading indicator for infinite scroll */}
-                       <div ref={userPostsLoadingRef} className="py-4 text-center">
-                         {isLoadingMoreUserPosts && (
-                           <div className="text-muted-foreground">Loading more posts...</div>
-                         )}
-                         {!hasMoreUserPosts && userPosts.length > 0 && (
-                           <div className="text-muted-foreground text-sm">You've reached the end</div>
-                         )}
-                       </div>
-                     </div>
-                   ) : (
-                     <div className="text-center text-muted-foreground">
-                       You haven't posted anything yet. Create your first post on Bluesky!
-                     </div>
-                   )}
-                </div>
+                        
+                        {/* Loading indicator for infinite scroll */}
+                        <div ref={userPostsLoadingRef} className="py-4 text-center">
+                          {isLoadingMoreUserPosts && (
+                            <div className="text-muted-foreground">Loading more posts...</div>
+                          )}
+                          {!hasMoreUserPosts && userPosts.length > 0 && (
+                            <div className="text-muted-foreground text-sm">You've reached the end</div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center text-muted-foreground py-8">
+                        You haven't posted anything yet. Create your first post on Bluesky!
+                      </div>
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="replies" className="mt-4">
+                    {isLoadingUserReplies ? (
+                      <div className="text-center text-muted-foreground">Loading your replies...</div>
+                    ) : userReplies.length > 0 ? (
+                      <div className="space-y-4">
+                        {userReplies.map((reply) => (
+                          <PostCard 
+                            key={reply.id} 
+                            {...reply} 
+                            onPostDeleted={() => {
+                              setUserReplies(prev => prev.filter(r => r.id !== reply.id));
+                            }}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center text-muted-foreground py-8">
+                        No replies yet
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </div>
             ) : (
               <div className="text-center space-y-4">

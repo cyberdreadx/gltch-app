@@ -169,11 +169,11 @@ export const CreatePost = ({ onPostCreated, variant = 'normal' }: CreatePostProp
             <Button
               type="submit"
               disabled={isSubmitting || !text.trim()}
-              className="gap-2"
+              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {isSubmitting ? (
                 <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/20 border-t-primary-foreground" />
                   Posting...
                 </>
               ) : (
