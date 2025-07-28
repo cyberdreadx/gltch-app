@@ -141,8 +141,15 @@ export const fetchTimeline = async (limit: number = 5, cursor?: string): Promise
 export const fetchUserPosts = async (handle: string, limit: number = 5, cursor?: string): Promise<{ posts: TransformedPost[], cursor?: string }> => {
   try {
     const response = await agent.getAuthorFeed({ actor: handle, limit, cursor });
+    
+    // Filter out replies to show only original posts on profile
+    const originalPosts = response.data.feed.filter(item => {
+      const post = item.post as BlueskyPost;
+      return !post.record?.reply; // Exclude posts that have a reply field (are replies)
+    });
+    
     return {
-      posts: response.data.feed.map(item => transformBlueskyPost(item.post as BlueskyPost)),
+      posts: originalPosts.map(item => transformBlueskyPost(item.post as BlueskyPost)),
       cursor: response.data.cursor
     };
   } catch (error) {
@@ -434,13 +441,54 @@ export const createReplyToComment = async (
   }
 };
 
-export const createPost = async (text: string): Promise<{ success: boolean; postUri?: string }> => {
+export const createPost = async (text: string, images?: File[]): Promise<{ success: boolean; postUri?: string }> => {
   try {
-    console.log('Creating post:', { text });
+    console.log('Creating post:', { text, imageCount: images?.length || 0 });
+    
+    let embed: any = undefined;
+    
+    // Upload images if provided
+    if (images && images.length > 0) {
+      try {
+        const uploadedImages = [];
+        
+        for (const image of images) {
+          console.log('Uploading image:', image.name, image.type);
+          
+          // Convert File to ArrayBuffer
+          const arrayBuffer = await image.arrayBuffer();
+          const uint8Array = new Uint8Array(arrayBuffer);
+          
+          // Upload blob to AT Protocol
+          const uploadResponse = await agent.uploadBlob(uint8Array, {
+            encoding: image.type,
+          });
+          
+          console.log('Image uploaded:', uploadResponse);
+          
+          uploadedImages.push({
+            alt: '', // Could add alt text input in UI later
+            image: uploadResponse.data.blob,
+          });
+        }
+        
+        // Create embed with images
+        embed = {
+          $type: 'app.bsky.embed.images',
+          images: uploadedImages,
+        };
+        
+        console.log('Created embed with images:', embed);
+      } catch (imageError) {
+        console.error('Failed to upload images:', imageError);
+        throw new Error('Failed to upload images');
+      }
+    }
     
     const record = {
       $type: 'app.bsky.feed.post',
       text: `${text}\n\n— via gltch.app`,
+      embed,
       createdAt: new Date().toISOString(),
     };
 

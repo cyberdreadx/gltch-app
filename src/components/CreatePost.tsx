@@ -30,7 +30,7 @@ export const CreatePost = ({ onPostCreated, variant = 'normal' }: CreatePostProp
     setIsSubmitting(true);
     
     try {
-      const result = await createPost(text.trim());
+      const result = await createPost(text.trim(), selectedImages.length > 0 ? selectedImages : undefined);
       
       if (result.success) {
         toast.success('Post created successfully!');
