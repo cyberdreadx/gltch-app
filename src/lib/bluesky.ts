@@ -33,6 +33,12 @@ export interface TransformedPost {
   authorAvatar?: string;
   postUri?: string; // Bluesky post URI for voting
   postCid?: string; // Bluesky post CID for reposts
+  parentPost?: {
+    title: string;
+    author: string;
+    authorDisplayName?: string;
+    authorAvatar?: string;
+  };
 }
 
 export interface ProfileData {
@@ -167,9 +173,39 @@ export const fetchUserReplies = async (handle: string, limit: number = 5, cursor
       const post = item.post as BlueskyPost;
       return post.record?.reply; // Include only posts that have a reply field (are replies)
     });
+
+    // Transform replies and add parent post context
+    const transformedReplies = await Promise.all(
+      replies.map(async (item) => {
+        const reply = transformBlueskyPost(item.post as BlueskyPost);
+        
+        // Try to fetch the parent post for context
+        try {
+          const replyRecord = item.post.record as any;
+          const parentUri = replyRecord?.reply?.parent?.uri;
+          if (parentUri) {
+            const threadResponse = await agent.getPostThread({ uri: parentUri });
+            if (threadResponse.success && threadResponse.data.thread && 'post' in threadResponse.data.thread) {
+              const parentPost = transformBlueskyPost(threadResponse.data.thread.post as BlueskyPost);
+              // Add parent post info to the reply
+              reply.parentPost = {
+                title: parentPost.title,
+                author: parentPost.author,
+                authorDisplayName: parentPost.authorDisplayName,
+                authorAvatar: parentPost.authorAvatar
+              };
+            }
+          }
+        } catch (error) {
+          console.log('Could not fetch parent post context for reply:', error);
+        }
+        
+        return reply;
+      })
+    );
     
     return {
-      posts: replies.map(item => transformBlueskyPost(item.post as BlueskyPost)),
+      posts: transformedReplies,
       cursor: response.data.cursor
     };
   } catch (error) {

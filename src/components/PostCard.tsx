@@ -30,6 +30,12 @@ interface PostCardProps {
   postUri?: string; // Bluesky post URI for voting
   postCid?: string; // Bluesky post CID for reposts
   onPostDeleted?: () => void; // Callback when post is deleted
+  parentPost?: {
+    title: string;
+    author: string;
+    authorDisplayName?: string;
+    authorAvatar?: string;
+  };
 }
 
 export function PostCard({
@@ -49,6 +55,7 @@ export function PostCard({
   postUri,
   postCid,
   onPostDeleted,
+  parentPost,
 }: PostCardProps) {
   const { session } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -73,8 +80,8 @@ export function PostCard({
       if (!storedSession) return;
 
       try {
-        // Check vote state
-        const { data } = await supabase.functions.invoke('bluesky-votes', {
+        // Check vote state with better error handling
+        const response = await supabase.functions.invoke('bluesky-votes', {
           body: {
             action: 'checkLikes',
             postUris: [postUri],
@@ -83,8 +90,8 @@ export function PostCard({
           }
         });
 
-        if (data?.votes?.[postUri]) {
-          const vote = data.votes[postUri];
+        if (response.data?.votes?.[postUri]) {
+          const vote = response.data.votes[postUri];
           console.log('Vote data for post:', postUri, vote);
           
           // Check if user has a vote in our database first (more reliable)
@@ -275,6 +282,27 @@ export function PostCard({
 
   return (
     <Card className="mb-4 bg-card border-border overflow-hidden max-w-full">
+      {/* Show parent post context for replies */}
+      {parentPost && (
+        <div className="px-3 pt-3 pb-2">
+          <div className="bg-muted/30 rounded-lg p-3 border-l-2 border-primary/20">
+            <div className="flex items-center gap-2 mb-2">
+              {parentPost.authorAvatar && (
+                <img 
+                  src={parentPost.authorAvatar} 
+                  alt={`${parentPost.authorDisplayName || parentPost.author}'s avatar`}
+                  className="w-4 h-4 rounded-full"
+                />
+              )}
+              <span className="text-xs text-muted-foreground">
+                Replying to <span className="font-medium">{parentPost.authorDisplayName || `@${parentPost.author}`}</span>
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground line-clamp-2">{parentPost.title}</p>
+          </div>
+        </div>
+      )}
+      
       {/* Post Header */}
       <div className="p-3 pb-2 max-w-full overflow-x-hidden">
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
