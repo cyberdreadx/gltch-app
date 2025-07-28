@@ -33,8 +33,8 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
     try {
       await login(identifier, password);
       toast({
-        title: "Success",
-        description: "Signed in successfully!",
+        title: "Welcome to GLTCH!",
+        description: "Signed in successfully! Your Bluesky account is now linked to GLTCH.",
       });
       onSuccess();
       onOpenChange(false);
@@ -180,7 +180,7 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="signup">Create Account</TabsTrigger>
             </TabsList>
             
             <TabsContent value="signin">
@@ -196,7 +196,7 @@ export const AuthDialog = ({ open, onOpenChange, onSuccess }: AuthDialogProps) =
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Enter your Bluesky handle (without .bsky.social) or email address
+                    Sign in with your existing Bluesky account. We'll automatically link it to GLTCH for full access.
                   </p>
                 </div>
                 <div className="space-y-2">
