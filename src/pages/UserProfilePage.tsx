@@ -4,7 +4,7 @@ import { ArrowLeft, UserPlus, UserMinus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PostCard } from '@/components/PostCard';
-import { fetchUserPosts, fetchUserReplies, fetchProfile, type TransformedPost, type ProfileData } from '@/lib/bluesky';
+import { fetchUserPosts, fetchUserReplies, fetchProfile, checkFollowStatus, followUser, unfollowUser, type TransformedPost, type ProfileData } from '@/lib/bluesky';
 import { useAuth } from '@/hooks/useAuth';
 
 export function UserProfilePage() {
@@ -15,6 +15,7 @@ export function UserProfilePage() {
   const [replies, setReplies] = useState<TransformedPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followUri, setFollowUri] = useState<string | undefined>();
   const [showFullDescription, setShowFullDescription] = useState(false);
 
   useEffect(() => {
@@ -33,8 +34,12 @@ export function UserProfilePage() {
         setPosts(postsData.posts);
         setReplies(repliesData.posts);
         
-        // TODO: Check if current user is following this user
-        setIsFollowing(false);
+        // Check if current user is following this user
+        if (isAuthenticated && profileData.did) {
+          const followStatus = await checkFollowStatus(profileData.did);
+          setIsFollowing(followStatus.isFollowing);
+          setFollowUri(followStatus.followUri);
+        }
       } catch (error) {
         console.error('Failed to load user data:', error);
       } finally {
@@ -43,13 +48,30 @@ export function UserProfilePage() {
     };
 
     loadUserData();
-  }, [handle]);
+  }, [handle, isAuthenticated]);
 
   const handleFollow = async () => {
-    if (!isAuthenticated || !handle) return;
+    if (!isAuthenticated || !profile?.did) return;
     
-    // TODO: Implement follow/unfollow functionality
-    setIsFollowing(!isFollowing);
+    try {
+      if (isFollowing && followUri) {
+        // Unfollow
+        const result = await unfollowUser(followUri);
+        if (result.success) {
+          setIsFollowing(false);
+          setFollowUri(undefined);
+        }
+      } else {
+        // Follow
+        const result = await followUser(profile.did);
+        if (result.success) {
+          setIsFollowing(true);
+          setFollowUri(result.followUri);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to follow/unfollow user:', error);
+    }
   };
 
   if (isLoading) {

@@ -611,3 +611,51 @@ export const deletePost = async (postUri: string): Promise<{ success: boolean }>
     return { success: false };
   }
 };
+
+// Follow functionality
+export const followUser = async (userDid: string): Promise<{ success: boolean; followUri?: string }> => {
+  try {
+    const response = await agent.follow(userDid);
+    return { success: true, followUri: response.uri };
+  } catch (error) {
+    console.error('Failed to follow user:', error);
+    return { success: false };
+  }
+};
+
+export const unfollowUser = async (followUri: string): Promise<{ success: boolean }> => {
+  try {
+    await agent.deleteFollow(followUri);
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to unfollow user:', error);
+    return { success: false };
+  }
+};
+
+export const checkFollowStatus = async (userDid: string): Promise<{ isFollowing: boolean; followUri?: string }> => {
+  try {
+    if (!agent.session?.did) {
+      return { isFollowing: false };
+    }
+
+    // Get the current user's follows
+    const response = await agent.getFollows({ 
+      actor: agent.session.did,
+      limit: 100 // We'll check the first 100 follows
+    });
+
+    const followRecord = response.data.follows.find(follow => follow.did === userDid);
+    
+    if (followRecord) {
+      // Extract the follow URI from the follow record
+      const followUri = followRecord.viewer?.following;
+      return { isFollowing: true, followUri };
+    }
+
+    return { isFollowing: false };
+  } catch (error) {
+    console.error('Failed to check follow status:', error);
+    return { isFollowing: false };
+  }
+};
