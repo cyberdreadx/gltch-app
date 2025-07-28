@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { PostCard } from "@/components/PostCard";
 import { CommunityCard } from "@/components/CommunityCard";
 import { BottomNav } from "@/components/BottomNav";
@@ -22,6 +22,7 @@ import { mockPosts, mockCommunities } from "@/data/mockData";
 import { ExternalLink, Settings } from "lucide-react";
 
 const Index = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('home');
   const [currentFeed, setCurrentFeed] = useState('g/feed');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
@@ -153,6 +154,21 @@ const Index = () => {
       setIsLoadingPosts(false);
     }
   }, [isAuthenticated]);
+
+  // Handle URL parameters on mount
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    const community = params.get('community');
+    
+    if (tab) {
+      setActiveTab(tab);
+    }
+    
+    if (community) {
+      setCurrentFeed(`g/${community}`);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     loadPostsForFeed(currentFeed);
