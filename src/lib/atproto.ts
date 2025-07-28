@@ -40,30 +40,18 @@ const createOrLinkSupabaseAccount = async (blueskySession: AuthSession) => {
 
     console.log('📊 Existing profile found:', existingProfile);
 
-    // Create a valid email from the DID by removing colons and other invalid characters
-    const validEmail = blueskySession.did.replace(/[^a-zA-Z0-9]/g, '') + '@gltch.local';
-
     if (existingProfile) {
-      // User already has a linked account, sign them in
-      console.log('✅ Found existing profile, attempting sign in with email:', validEmail);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: validEmail,
-        password: blueskySession.did // Use DID as password for linked accounts
-      });
-      
-      if (!error && data.session) {
-        console.log('✅ Successfully signed in existing user');
-        return { success: true, session: data.session };
-      } else {
-        console.error('❌ Error signing in existing user:', error);
+      // User already has a linked account, check if we're already signed in to the right account
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session && session.user.id === existingProfile.user_id) {
+        console.log('✅ Already signed in with correct existing profile');
+        return { success: true, session };
       }
     }
 
-    // Create new Supabase account linked to Bluesky
-    console.log('🆕 Creating new Supabase account with email:', validEmail);
-    const { data, error } = await supabase.auth.signUp({
-      email: validEmail, // Use cleaned DID as email for unique accounts
-      password: blueskySession.did, // Use DID as password
+    // Create anonymous Supabase account and link to Bluesky
+    console.log('🆕 Creating anonymous Supabase account for DID:', blueskySession.did);
+    const { data, error } = await supabase.auth.signInAnonymously({
       options: {
         data: {
           display_name: blueskySession.handle,
@@ -76,14 +64,14 @@ const createOrLinkSupabaseAccount = async (blueskySession: AuthSession) => {
       }
     });
 
-    console.log('📝 Supabase signup result:', { data: data?.user?.id, error });
+    console.log('📝 Supabase anonymous signin result:', { data: data?.user?.id, error });
 
     if (error) {
-      console.error('❌ Error creating linked Supabase account:', error);
+      console.error('❌ Error creating anonymous Supabase account:', error);
       return { success: false, error };
     }
 
-    console.log('✅ Successfully created new linked account');
+    console.log('✅ Successfully created new anonymous linked account');
     return { success: true, session: data.session };
   } catch (error) {
     console.error('Error in createOrLinkSupabaseAccount:', error);
