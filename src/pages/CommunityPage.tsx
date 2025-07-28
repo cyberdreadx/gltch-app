@@ -18,6 +18,7 @@ interface Community {
   member_count: number;
   post_count: number;
   created_at: string;
+  created_by: string | null;
 }
 
 export function CommunityPage() {
@@ -33,6 +34,9 @@ export function CommunityPage() {
   const [cursor, setCursor] = useState<string | undefined>();
   const [isMember, setIsMember] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+  
+  // Check if current user is the creator of this community
+  const isCreator = isAuthenticated && user?.id && community?.created_by === user.id;
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
 
@@ -315,36 +319,46 @@ export function CommunityPage() {
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center space-x-2">
-                    {isAuthenticated ? (
-                      <Button 
-                        size="sm" 
-                        onClick={handleJoinLeave}
-                        disabled={isJoining}
-                        variant={isMember ? "outline" : "default"}
-                        className={isMember ? "hover:bg-destructive hover:text-destructive-foreground" : "bg-primary hover:bg-primary/90"}
-                      >
-                        {isJoining ? (
-                          "..."
-                        ) : isMember ? (
-                          <>
-                            <Minus className="h-4 w-4 mr-2" />
-                            Leave Community
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Join Community
-                          </>
-                        )}
-                      </Button>
-                    ) : (
-                      <Button size="sm" className="bg-primary hover:bg-primary/90">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Join Community
-                      </Button>
-                    )}
+                   {/* Actions */}
+                   <div className="flex items-center space-x-2">
+                     {isAuthenticated ? (
+                       isCreator ? (
+                         <Button 
+                           size="sm" 
+                           variant="outline"
+                           className="bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+                         >
+                           Manage Community
+                         </Button>
+                       ) : (
+                         <Button 
+                           size="sm" 
+                           onClick={handleJoinLeave}
+                           disabled={isJoining}
+                           variant={isMember ? "outline" : "default"}
+                           className={isMember ? "hover:bg-destructive hover:text-destructive-foreground" : "bg-primary hover:bg-primary/90"}
+                         >
+                           {isJoining ? (
+                             "..."
+                           ) : isMember ? (
+                             <>
+                               <Minus className="h-4 w-4 mr-2" />
+                               Leave Community
+                             </>
+                           ) : (
+                             <>
+                               <Plus className="h-4 w-4 mr-2" />
+                               Join Community
+                             </>
+                           )}
+                         </Button>
+                       )
+                     ) : (
+                       <Button size="sm" className="bg-primary hover:bg-primary/90">
+                         <Plus className="h-4 w-4 mr-2" />
+                         Join Community
+                       </Button>
+                     )}
                     <Button variant="outline" size="sm">
                       Create Post
                     </Button>
