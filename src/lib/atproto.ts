@@ -40,11 +40,14 @@ const createOrLinkSupabaseAccount = async (blueskySession: AuthSession) => {
 
     console.log('📊 Existing profile found:', existingProfile);
 
+    // Create a valid email from the DID by removing colons and other invalid characters
+    const validEmail = blueskySession.did.replace(/[^a-zA-Z0-9]/g, '') + '@gltch.local';
+
     if (existingProfile) {
       // User already has a linked account, sign them in
-      console.log('✅ Found existing profile, attempting sign in...');
+      console.log('✅ Found existing profile, attempting sign in with email:', validEmail);
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: `${blueskySession.did}@gltch.local`,
+        email: validEmail,
         password: blueskySession.did // Use DID as password for linked accounts
       });
       
@@ -57,9 +60,9 @@ const createOrLinkSupabaseAccount = async (blueskySession: AuthSession) => {
     }
 
     // Create new Supabase account linked to Bluesky
-    console.log('🆕 Creating new Supabase account for DID:', blueskySession.did);
+    console.log('🆕 Creating new Supabase account with email:', validEmail);
     const { data, error } = await supabase.auth.signUp({
-      email: `${blueskySession.did}@gltch.local`, // Use DID as email for unique accounts
+      email: validEmail, // Use cleaned DID as email for unique accounts
       password: blueskySession.did, // Use DID as password
       options: {
         data: {
