@@ -332,6 +332,10 @@ const Index = () => {
         if (communitiesError) {
           console.error('Failed to load communities:', communitiesError);
         } else {
+          // Debug logging for ownership check
+          console.log('Current Supabase user ID:', supabaseUser?.id);
+          console.log('Communities data:', communitiesData?.map(c => ({ name: c.name, created_by: c.created_by, current_user_match: c.created_by === supabaseUser?.id })));
+          
           // If user is authenticated, check their membership status
           let communitiesWithMembership = communitiesData || [];
           
