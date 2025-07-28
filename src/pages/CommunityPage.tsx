@@ -7,6 +7,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchTimeline, fetchPublicFeed, TransformedPost } from '@/lib/bluesky';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { ExpandableAbout } from '@/components/ExpandableAbout';
 
 interface Community {
   id: string;
@@ -299,15 +300,14 @@ export function CommunityPage() {
                 <div className="flex-1 pt-2">
                   <h1 className="text-2xl font-bold text-foreground mb-1">
                     {community.display_name}
-                  </h1>
-                  
-                  {community.description && (
-                    <p className="text-muted-foreground mb-3 leading-relaxed">
-                      {community.description}
-                    </p>
-                  )}
-
-                  {/* Stats */}
+                   </h1>
+                   
+                   {/* About Section */}
+                   {community.description && (
+                     <ExpandableAbout description={community.description} />
+                   )}
+                   
+                   {/* Stats */}
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-4">
                     <div className="flex items-center space-x-1">
                       <Users className="h-4 w-4" />
