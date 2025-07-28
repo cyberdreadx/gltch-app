@@ -374,7 +374,7 @@ const Index = () => {
   // Load user communities when user is authenticated
   useEffect(() => {
     const loadUserCommunities = async () => {
-      if (!isAuthenticated || !session?.did) return;
+      if (!isSupabaseAuthenticated || !supabaseUser?.id) return;
       
       try {
         const { data: memberships, error } = await supabase
@@ -385,7 +385,7 @@ const Index = () => {
               display_name
             )
           `)
-          .eq('user_id', session.did);
+          .eq('user_id', supabaseUser?.id);
         
         if (error) {
           console.error('Failed to load user communities:', error);
@@ -399,7 +399,7 @@ const Index = () => {
     };
 
     loadUserCommunities();
-  }, [isAuthenticated, session?.did]);
+  }, [isSupabaseAuthenticated, supabaseUser?.id]);
 
   const renderContent = () => {
     switch (activeTab) {
