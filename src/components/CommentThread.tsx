@@ -3,8 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MessageCircle, ArrowUp, Send, Loader2 } from "lucide-react";
-import { fetchPostThread, createReply, ThreadPost } from "@/lib/bluesky";
+import { MessageCircle, ArrowUp, Send, Loader2, Heart, Reply } from "lucide-react";
+import { fetchPostThread, createReply, ThreadPost, likePost, unlikePost, checkLikeStatus, createReplyToComment } from "@/lib/bluesky";
 import { formatTimeAgo } from "@/lib/customFeeds";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -19,11 +19,96 @@ interface CommentThreadProps {
 interface CommentProps {
   comment: ThreadPost;
   depth: number;
+  rootPostUri: string;
+  rootPostCid: string;
+  onThreadUpdate: () => void;
 }
 
-const Comment = ({ comment, depth }: CommentProps) => {
+const Comment = ({ comment, depth, rootPostUri, rootPostCid, onThreadUpdate }: CommentProps) => {
+  const { session } = useAuth();
   const maxDepth = 3; // Limit nesting depth
   const indentClass = depth > 0 ? `ml-${Math.min(depth * 4, maxDepth * 4)}` : '';
+  
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(comment.post.likeCount || 0);
+  const [likeUri, setLikeUri] = useState<string | undefined>();
+  const [likeLoading, setLikeLoading] = useState(false);
+  
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [replySubmitting, setReplySubmitting] = useState(false);
+
+  // Check initial like status
+  useEffect(() => {
+    const checkInitialLikeStatus = async () => {
+      if (!session || !comment.post.uri) return;
+      
+      try {
+        const result = await checkLikeStatus(comment.post.uri, session.did);
+        setIsLiked(result.isLiked);
+        setLikeUri(result.likeUri);
+      } catch (error) {
+        console.error('Error checking like status:', error);
+      }
+    };
+
+    checkInitialLikeStatus();
+  }, [comment.post.uri, session]);
+
+  const handleLike = async () => {
+    if (!session || !comment.post.uri || !comment.post.cid || likeLoading) return;
+    
+    setLikeLoading(true);
+    try {
+      if (isLiked && likeUri) {
+        // Unlike
+        const result = await unlikePost(likeUri);
+        if (result.success) {
+          setIsLiked(false);
+          setLikeUri(undefined);
+          setLikeCount(likeCount - 1);
+        }
+      } else {
+        // Like
+        const result = await likePost(comment.post.uri, comment.post.cid);
+        if (result.success) {
+          setIsLiked(true);
+          setLikeUri(result.likeUri);
+          setLikeCount(likeCount + 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling like:', error);
+    } finally {
+      setLikeLoading(false);
+    }
+  };
+
+  const handleReplySubmit = async () => {
+    if (!replyText.trim() || !session || !comment.post.uri || !comment.post.cid) return;
+    
+    setReplySubmitting(true);
+    try {
+      const result = await createReplyToComment(
+        rootPostUri,
+        rootPostCid,
+        comment.post.uri,
+        comment.post.cid,
+        replyText.trim()
+      );
+      
+      if (result.success) {
+        setReplyText("");
+        setShowReplyForm(false);
+        // Trigger thread reload
+        onThreadUpdate();
+      }
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+    } finally {
+      setReplySubmitting(false);
+    }
+  };
 
   return (
     <div className={cn("border-l-2 border-border pl-3 py-2", indentClass)}>
@@ -46,18 +131,73 @@ const Comment = ({ comment, depth }: CommentProps) => {
           
           <p className="text-sm text-foreground">{comment.post.record?.text}</p>
           
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <div className="flex items-center space-x-1">
-              <ArrowUp className="h-3 w-3" />
-              <span>{comment.post.likeCount || 0}</span>
-            </div>
+          <div className="flex items-center space-x-4 text-xs">
+            <button
+              onClick={handleLike}
+              disabled={!session || likeLoading}
+              className={cn(
+                "flex items-center space-x-1 hover:text-red-500 transition-colors",
+                isLiked ? "text-red-500" : "text-muted-foreground",
+                (!session || likeLoading) && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <Heart className={cn("h-3 w-3", isLiked && "fill-current")} />
+              <span>{likeCount}</span>
+            </button>
+            
+            {session && depth < maxDepth && (
+              <button
+                onClick={() => setShowReplyForm(!showReplyForm)}
+                className="flex items-center space-x-1 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Reply className="h-3 w-3" />
+                <span>Reply</span>
+              </button>
+            )}
+            
             {comment.post.replyCount && comment.post.replyCount > 0 && (
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-1 text-muted-foreground">
                 <MessageCircle className="h-3 w-3" />
                 <span>{comment.post.replyCount}</span>
               </div>
             )}
           </div>
+          
+          {/* Inline reply form */}
+          {showReplyForm && session && (
+            <div className="mt-2 space-y-2">
+              <Textarea
+                placeholder="Write a reply..."
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                className="min-h-[60px] text-sm"
+              />
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    setShowReplyForm(false);
+                    setReplyText("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={handleReplySubmit}
+                  disabled={!replyText.trim() || replySubmitting}
+                >
+                  {replySubmitting ? (
+                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  ) : (
+                    <Send className="h-3 w-3 mr-1" />
+                  )}
+                  Reply
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
@@ -65,7 +205,14 @@ const Comment = ({ comment, depth }: CommentProps) => {
       {comment.replies && comment.replies.length > 0 && depth < maxDepth && (
         <div className="mt-2 space-y-2">
           {comment.replies.map((reply, index) => (
-            <Comment key={reply.post.uri || index} comment={reply} depth={depth + 1} />
+            <Comment 
+              key={reply.post.uri || index} 
+              comment={reply} 
+              depth={depth + 1}
+              rootPostUri={rootPostUri}
+              rootPostCid={rootPostCid}
+              onThreadUpdate={onThreadUpdate}
+            />
           ))}
         </div>
       )}
@@ -136,7 +283,14 @@ export const CommentThread = ({ postUri, postCid, isOpen, onClose }: CommentThre
           ) : thread?.replies && thread.replies.length > 0 ? (
             <div className="space-y-4">
               {thread.replies.map((reply, index) => (
-                <Comment key={reply.post.uri || index} comment={reply} depth={0} />
+                <Comment 
+                  key={reply.post.uri || index} 
+                  comment={reply} 
+                  depth={0}
+                  rootPostUri={postUri}
+                  rootPostCid={postCid}
+                  onThreadUpdate={loadThread}
+                />
               ))}
             </div>
           ) : (

@@ -338,3 +338,98 @@ export const createReply = async (postUri: string, postCid: string, text: string
     return { success: false };
   }
 };
+
+export const likePost = async (postUri: string, postCid: string): Promise<{ success: boolean; likeUri?: string }> => {
+  try {
+    console.log('Liking post:', { postUri, postCid });
+    const response = await agent.like(postUri, postCid);
+    console.log('Like response:', response);
+    
+    return {
+      success: true,
+      likeUri: response.uri
+    };
+  } catch (error) {
+    console.error('Failed to like post:', error);
+    return { success: false };
+  }
+};
+
+export const unlikePost = async (likeUri: string): Promise<{ success: boolean }> => {
+  try {
+    console.log('Unliking post:', likeUri);
+    await agent.deleteLike(likeUri);
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to unlike post:', error);
+    return { success: false };
+  }
+};
+
+export const checkLikeStatus = async (postUri: string, userDid: string): Promise<{ isLiked: boolean; likeUri?: string }> => {
+  try {
+    // Get user's likes by listing records from their like collection
+    const response = await agent.api.com.atproto.repo.listRecords({
+      repo: userDid,
+      collection: 'app.bsky.feed.like',
+      limit: 50,
+    });
+    
+    // Find a like that matches the post URI
+    const like = response.data.records.find((record: any) => 
+      record.value?.subject?.uri === postUri
+    );
+    
+    return {
+      isLiked: !!like,
+      likeUri: like?.uri
+    };
+  } catch (error) {
+    console.error('Failed to check like status:', error);
+    return { isLiked: false };
+  }
+};
+
+export const createReplyToComment = async (
+  rootPostUri: string, 
+  rootPostCid: string, 
+  parentUri: string, 
+  parentCid: string, 
+  text: string
+): Promise<{ success: boolean; replyUri?: string }> => {
+  try {
+    console.log('Creating reply to comment:', { rootPostUri, rootPostCid, parentUri, parentCid, text });
+    
+    const record = {
+      $type: 'app.bsky.feed.post',
+      text,
+      reply: {
+        root: {
+          uri: rootPostUri,
+          cid: rootPostCid,
+        },
+        parent: {
+          uri: parentUri,
+          cid: parentCid,
+        },
+      },
+      createdAt: new Date().toISOString(),
+    };
+
+    const response = await agent.api.com.atproto.repo.createRecord({
+      repo: agent.session?.did || '',
+      collection: 'app.bsky.feed.post',
+      record,
+    });
+    
+    console.log('Comment reply created:', response);
+    
+    return {
+      success: true,
+      replyUri: response.data.uri
+    };
+  } catch (error) {
+    console.error('Failed to create comment reply:', error);
+    return { success: false };
+  }
+};
