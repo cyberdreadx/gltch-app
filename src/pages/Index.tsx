@@ -316,7 +316,24 @@ const Index = () => {
         if (communitiesError) {
           console.error('Failed to load communities:', communitiesError);
         } else {
-          setCommunities(communitiesData || []);
+          // If user is authenticated, check their membership status
+          let communitiesWithMembership = communitiesData || [];
+          
+          if (isSupabaseAuthenticated && supabaseUser?.id && communitiesData) {
+            const { data: memberships } = await supabase
+              .from('user_communities')
+              .select('community_id')
+              .eq('user_id', supabaseUser.id);
+            
+            const membershipIds = new Set(memberships?.map(m => m.community_id) || []);
+            
+            communitiesWithMembership = communitiesData.map(community => ({
+              ...community,
+              isMember: membershipIds.has(community.id)
+            }));
+          }
+          
+          setCommunities(communitiesWithMembership);
         }
 
         // Fetch trending posts (using public feed for discovery)
@@ -496,15 +513,17 @@ const Index = () => {
                   </div>
                 ) : communities.length > 0 ? (
                   <div className="space-y-3">
-                    {communities.map((community) => (
-                      <CommunityCard 
-                        key={community.id} 
-                        name={community.name}
-                        description={community.description || 'A community on GLTCH'}
-                        members={community.member_count}
-                        iconUrl={community.icon_url}
-                      />
-                    ))}
+                     {communities.map((community) => (
+                       <CommunityCard 
+                         key={community.id} 
+                         name={community.name}
+                         description={community.description || 'A community on GLTCH'}
+                         members={community.member_count}
+                         iconUrl={community.icon_url}
+                         createdBy={community.created_by}
+                         isMember={community.isMember}
+                       />
+                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-8">
