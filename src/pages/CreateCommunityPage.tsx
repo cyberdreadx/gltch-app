@@ -8,12 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 export function CreateCommunityPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, user } = useSupabaseAuth();
+  const { isAuthenticated: isBlueskyAuthenticated } = useAuth();
+  const { user, session } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -60,7 +62,7 @@ export function CreateCommunityPage() {
     e.preventDefault();
     
     
-    if (!isAuthenticated || !user?.id) {
+    if (!isBlueskyAuthenticated || !user?.id) {
       toast({
         title: "Authentication required",
         description: "Please sign in to create a community",
@@ -142,7 +144,7 @@ export function CreateCommunityPage() {
     }
   };
 
-  if (!isAuthenticated) {
+  if (!isBlueskyAuthenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md p-6 text-center">
