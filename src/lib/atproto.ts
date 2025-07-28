@@ -41,10 +41,11 @@ const createOrLinkSupabaseAccount = async (blueskySession: AuthSession) => {
     console.log('📊 Existing profile found:', existingProfile);
 
     if (existingProfile) {
-      // User already has a linked account - sign into existing Supabase account
-      console.log('✅ Existing user found, signing into existing account:', existingProfile.user_id);
+      // User already has a linked account - we need to handle this differently
+      // For now, create a new anonymous session and update the profile to link to the new user
+      console.log('✅ Existing user found, creating new session and updating profile');
       
-      // Sign in anonymously with the same user metadata to link the accounts
+      // Create new anonymous Supabase account
       const { data, error } = await supabase.auth.signInAnonymously({
         options: {
           data: {
@@ -59,8 +60,23 @@ const createOrLinkSupabaseAccount = async (blueskySession: AuthSession) => {
       });
       
       if (error) {
-        console.error('❌ Error signing into existing account:', error);
+        console.error('❌ Error creating new session:', error);
         return { success: false, error };
+      }
+
+      // Update the existing profile to point to the new user_id
+      if (data.session?.user?.id) {
+        console.log('🔄 Updating profile user_id from', existingProfile.user_id, 'to', data.session.user.id);
+        await supabase
+          .from('profiles')
+          .update({ user_id: data.session.user.id })
+          .eq('bluesky_did', blueskySession.did);
+          
+        // Also update any communities created by this user
+        await supabase
+          .from('communities')
+          .update({ created_by: data.session.user.id })
+          .eq('created_by', existingProfile.user_id);
       }
       
       return { success: true, session: data.session };
