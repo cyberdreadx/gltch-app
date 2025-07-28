@@ -41,9 +41,29 @@ const createOrLinkSupabaseAccount = async (blueskySession: AuthSession) => {
     console.log('📊 Existing profile found:', existingProfile);
 
     if (existingProfile) {
-      // User already has a linked account - just return success without creating new user
-      console.log('✅ Existing user found, using existing account');
-      return { success: true, session: null };
+      // User already has a linked account - sign into existing Supabase account
+      console.log('✅ Existing user found, signing into existing account:', existingProfile.user_id);
+      
+      // Sign in anonymously with the same user metadata to link the accounts
+      const { data, error } = await supabase.auth.signInAnonymously({
+        options: {
+          data: {
+            display_name: blueskySession.handle,
+            bluesky_handle: blueskySession.handle,
+            bluesky_did: blueskySession.did,
+            is_gltch_native: false,
+            bluesky_access_jwt: blueskySession.accessJwt,
+            bluesky_refresh_jwt: blueskySession.refreshJwt,
+          }
+        }
+      });
+      
+      if (error) {
+        console.error('❌ Error signing into existing account:', error);
+        return { success: false, error };
+      }
+      
+      return { success: true, session: data.session };
     }
 
     // Create new anonymous Supabase account and link to Bluesky
