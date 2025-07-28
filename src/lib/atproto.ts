@@ -28,27 +28,36 @@ export const clearSession = () => {
 
 // Helper function to create or link Supabase account
 const createOrLinkSupabaseAccount = async (blueskySession: AuthSession) => {
+  console.log('🔄 Starting createOrLinkSupabaseAccount for DID:', blueskySession.did);
   try {
     // Check if a Supabase user already exists with this Bluesky DID
+    console.log('🔍 Checking for existing profile with DID:', blueskySession.did);
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('user_id')
       .eq('bluesky_did', blueskySession.did)
       .maybeSingle();
 
+    console.log('📊 Existing profile found:', existingProfile);
+
     if (existingProfile) {
       // User already has a linked account, sign them in
+      console.log('✅ Found existing profile, attempting sign in...');
       const { data, error } = await supabase.auth.signInWithPassword({
         email: `${blueskySession.did}@gltch.local`,
         password: blueskySession.did // Use DID as password for linked accounts
       });
       
       if (!error && data.session) {
+        console.log('✅ Successfully signed in existing user');
         return { success: true, session: data.session };
+      } else {
+        console.error('❌ Error signing in existing user:', error);
       }
     }
 
     // Create new Supabase account linked to Bluesky
+    console.log('🆕 Creating new Supabase account for DID:', blueskySession.did);
     const { data, error } = await supabase.auth.signUp({
       email: `${blueskySession.did}@gltch.local`, // Use DID as email for unique accounts
       password: blueskySession.did, // Use DID as password
@@ -64,11 +73,14 @@ const createOrLinkSupabaseAccount = async (blueskySession: AuthSession) => {
       }
     });
 
+    console.log('📝 Supabase signup result:', { data: data?.user?.id, error });
+
     if (error) {
-      console.error('Error creating linked Supabase account:', error);
+      console.error('❌ Error creating linked Supabase account:', error);
       return { success: false, error };
     }
 
+    console.log('✅ Successfully created new linked account');
     return { success: true, session: data.session };
   } catch (error) {
     console.error('Error in createOrLinkSupabaseAccount:', error);
@@ -122,7 +134,9 @@ export const login = async (identifier: string, password: string): Promise<AuthS
   storeSession(session);
   
   // Create or link Supabase account
-  await createOrLinkSupabaseAccount(session);
+  console.log('🔗 Linking Supabase account for:', session.handle);
+  const linkResult = await createOrLinkSupabaseAccount(session);
+  console.log('🔗 Link result:', linkResult);
   
   return session;
 };
