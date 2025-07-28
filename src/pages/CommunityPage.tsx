@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { fetchTimeline, fetchPublicFeed, TransformedPost } from '@/lib/bluesky';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { ExpandableAbout } from '@/components/ExpandableAbout';
+import { ManageCommunity } from '@/components/ManageCommunity';
 
 interface Community {
   id: string;
@@ -179,6 +180,10 @@ export function CommunityPage() {
     }
   };
 
+  const handleCommunityUpdate = (updatedCommunity: Community) => {
+    setCommunity(updatedCommunity);
+  };
+
   // Set up intersection observer for infinite scroll
   useEffect(() => {
     if (loading || !hasMorePosts) return;
@@ -322,14 +327,19 @@ export function CommunityPage() {
                    {/* Actions */}
                    <div className="flex items-center space-x-2">
                      {isAuthenticated ? (
-                       isCreator ? (
-                         <Button 
-                           size="sm" 
-                           variant="outline"
-                           className="bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
-                         >
-                           Manage Community
-                         </Button>
+                        isCreator ? (
+                          <ManageCommunity 
+                            community={community} 
+                            onUpdate={handleCommunityUpdate}
+                          >
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+                            >
+                              Manage Community
+                            </Button>
+                          </ManageCommunity>
                        ) : (
                          <Button 
                            size="sm" 
