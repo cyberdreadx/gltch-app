@@ -97,6 +97,11 @@ export function CommunityPage() {
         }
 
         setCommunity(communityData);
+        
+        // Debug logging for ownership check
+        console.log('CommunityPage - Current user ID:', user?.id);
+        console.log('CommunityPage - Community created_by:', communityData?.created_by);
+        console.log('CommunityPage - Ownership match:', communityData?.created_by === user?.id);
 
         // Check if user is a member of this community
         if (isAuthenticated && user?.id && communityData) {
