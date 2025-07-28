@@ -68,12 +68,12 @@ export const CreatePost = ({ onPostCreated, variant = 'normal' }: CreatePostProp
   const triggerButton = variant === 'floating' ? (
     <Button 
       size="lg" 
-      className="h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 border-2 border-background"
+      className="h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-primary via-primary-glow to-primary hover:shadow-xl hover:scale-105 transition-all duration-300 border-0"
     >
-      <PlusCircle className="h-6 w-6" />
+      <PlusCircle className="h-6 w-6 text-white" />
     </Button>
   ) : (
-    <Button className="gap-2">
+    <Button className="gap-2 bg-gradient-to-r from-primary to-primary-glow hover:from-primary/90 hover:to-primary-glow/90 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300">
       <PlusCircle className="h-4 w-4" />
       Create Post
     </Button>
@@ -114,7 +114,7 @@ export const CreatePost = ({ onPostCreated, variant = 'normal' }: CreatePostProp
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isSubmitting || selectedImages.length >= 4}
-                className="gap-2"
+                className="gap-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
               >
                 <ImageIcon className="h-4 w-4" />
                 Add Images {selectedImages.length > 0 && `(${selectedImages.length}/4)`}
@@ -153,7 +153,7 @@ export const CreatePost = ({ onPostCreated, variant = 'normal' }: CreatePostProp
               </span>
             </div>
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-3">
             <Button
               type="button"
               variant="outline"
@@ -163,17 +163,18 @@ export const CreatePost = ({ onPostCreated, variant = 'normal' }: CreatePostProp
                 setSelectedImages([]);
               }}
               disabled={isSubmitting}
+              className="hover:bg-muted/50 transition-colors duration-300"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !text.trim()}
-              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="gap-2 bg-gradient-to-r from-primary to-primary-glow hover:from-primary/90 hover:to-primary-glow/90 text-white shadow-md hover:shadow-lg transition-all duration-300 border-0"
             >
               {isSubmitting ? (
                 <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/20 border-t-primary-foreground" />
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
                   Posting...
                 </>
               ) : (
