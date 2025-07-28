@@ -22,23 +22,32 @@ export const useNotifications = () => {
   const { session } = useSupabaseAuth();
 
   const fetchNotifications = async () => {
-    if (!session?.user?.id) return;
-
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false })
-      .limit(50);
-
-    if (error) {
-      console.error('Error fetching notifications:', error);
+    if (!session?.user?.id) {
+      setLoading(false);
       return;
     }
 
-    setNotifications((data || []) as Notification[]);
-    setUnreadCount(data?.filter(n => !n.is_read).length || 0);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        setLoading(false);
+        return;
+      }
+
+      setNotifications((data || []) as Notification[]);
+      setUnreadCount(data?.filter(n => !n.is_read).length || 0);
+    } catch (error) {
+      console.error('Error in fetchNotifications:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const markAsRead = async (notificationId: string) => {
@@ -80,6 +89,7 @@ export const useNotifications = () => {
   };
 
   useEffect(() => {
+    console.log('Notifications hook - session:', session?.user?.id);
     fetchNotifications();
   }, [session?.user?.id]);
 
