@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, UserPlus, UserMinus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PostCard } from '@/components/PostCard';
-import { fetchUserPosts, fetchProfile, type TransformedPost, type ProfileData } from '@/lib/bluesky';
+import { fetchUserPosts, fetchUserReplies, fetchProfile, type TransformedPost, type ProfileData } from '@/lib/bluesky';
 import { useAuth } from '@/hooks/useAuth';
 
 export function UserProfilePage() {
@@ -11,6 +12,7 @@ export function UserProfilePage() {
   const { session, isAuthenticated } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [posts, setPosts] = useState<TransformedPost[]>([]);
+  const [replies, setReplies] = useState<TransformedPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -21,13 +23,15 @@ export function UserProfilePage() {
     const loadUserData = async () => {
       setIsLoading(true);
       try {
-        const [profileData, postsData] = await Promise.all([
+        const [profileData, postsData, repliesData] = await Promise.all([
           fetchProfile(handle),
-          fetchUserPosts(handle, 20)
+          fetchUserPosts(handle, 20),
+          fetchUserReplies(handle, 20)
         ]);
         
         setProfile(profileData);
         setPosts(postsData.posts);
+        setReplies(repliesData.posts);
         
         // TODO: Check if current user is following this user
         setIsFollowing(false);
@@ -180,27 +184,53 @@ export function UserProfilePage() {
             </div>
           </div>
           
-          {/* Posts Section */}
-          <div>
-            <h3 className="text-lg font-semibold text-foreground mb-4">Posts</h3>
-            {posts.length > 0 ? (
-              <div className="space-y-4">
-                {posts.map((post) => (
-                  <PostCard 
-                    key={post.id} 
-                    {...post} 
-                    onPostDeleted={() => {
-                      setPosts(prev => prev.filter(p => p.id !== post.id));
-                    }}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center text-muted-foreground py-8">
-                No posts yet
-              </div>
-            )}
-          </div>
+          {/* Posts and Replies Section */}
+          <Tabs defaultValue="posts" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="posts">Posts</TabsTrigger>
+              <TabsTrigger value="replies">Replies</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="posts" className="mt-4">
+              {posts.length > 0 ? (
+                <div className="space-y-4">
+                  {posts.map((post) => (
+                    <PostCard 
+                      key={post.id} 
+                      {...post} 
+                      onPostDeleted={() => {
+                        setPosts(prev => prev.filter(p => p.id !== post.id));
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-muted-foreground py-8">
+                  No posts yet
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="replies" className="mt-4">
+              {replies.length > 0 ? (
+                <div className="space-y-4">
+                  {replies.map((reply) => (
+                    <PostCard 
+                      key={reply.id} 
+                      {...reply} 
+                      onPostDeleted={() => {
+                        setReplies(prev => prev.filter(r => r.id !== reply.id));
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-muted-foreground py-8">
+                  No replies yet
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

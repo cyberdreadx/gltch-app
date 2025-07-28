@@ -158,6 +158,26 @@ export const fetchUserPosts = async (handle: string, limit: number = 5, cursor?:
   }
 };
 
+export const fetchUserReplies = async (handle: string, limit: number = 5, cursor?: string): Promise<{ posts: TransformedPost[], cursor?: string }> => {
+  try {
+    const response = await agent.getAuthorFeed({ actor: handle, limit, cursor });
+    
+    // Filter to show only replies (posts with a reply field)
+    const replies = response.data.feed.filter(item => {
+      const post = item.post as BlueskyPost;
+      return post.record?.reply; // Include only posts that have a reply field (are replies)
+    });
+    
+    return {
+      posts: replies.map(item => transformBlueskyPost(item.post as BlueskyPost)),
+      cursor: response.data.cursor
+    };
+  } catch (error) {
+    console.error('Failed to fetch user replies:', error);
+    throw error;
+  }
+};
+
 export const fetchProfile = async (handle: string): Promise<ProfileData> => {
   try {
     const response = await agent.getProfile({ actor: handle });
