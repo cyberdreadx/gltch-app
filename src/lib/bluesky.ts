@@ -307,7 +307,7 @@ export const createReply = async (postUri: string, postCid: string, text: string
     
     const record = {
       $type: 'app.bsky.feed.post',
-      text,
+      text: `${text}\n\n— via gltch.app`,
       reply: {
         root: {
           uri: postUri,
@@ -402,7 +402,7 @@ export const createReplyToComment = async (
     
     const record = {
       $type: 'app.bsky.feed.post',
-      text,
+      text: `${text}\n\n— via gltch.app`,
       reply: {
         root: {
           uri: rootPostUri,
