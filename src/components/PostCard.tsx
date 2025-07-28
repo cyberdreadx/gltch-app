@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUp, ArrowDown, MessageCircle, Share, MoreHorizontal } from "lucide-react";
+import { ArrowUp, ArrowDown, MessageCircle, Share, MoreHorizontal, Repeat2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ImageModal } from "./ImageModal";
 import { renderTextWithHashtags } from "@/utils/hashtag";
@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getStoredSession } from "@/lib/atproto";
+import { createRepost, deleteRepost, checkRepostStatus } from "@/lib/bluesky";
 
 interface PostCardProps {
   id: string;
@@ -19,6 +20,7 @@ interface PostCardProps {
   timestamp: string;
   upvotes: number;
   comments: number;
+  reposts?: number;
   imageUrl?: string;
   videoUrl?: string;
   mediaAlt?: string;
@@ -35,6 +37,7 @@ export function PostCard({
   timestamp,
   upvotes: initialUpvotes,
   comments,
+  reposts: initialReposts = 0,
   imageUrl,
   videoUrl,
   mediaAlt,
@@ -44,21 +47,26 @@ export function PostCard({
 }: PostCardProps) {
   const { session } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [repostLoading, setRepostLoading] = useState(false);
   const [voteState, setVoteState] = useState<'up' | 'down' | null>(null);
   const [upvotes, setUpvotes] = useState(initialUpvotes);
+  const [reposts, setReposts] = useState(initialReposts);
+  const [isReposted, setIsReposted] = useState(false);
+  const [repostUri, setRepostUri] = useState<string | undefined>();
   const [showImageModal, setShowImageModal] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
 
-  // Check initial vote state when component loads
+  // Check initial vote and repost state when component loads
   useEffect(() => {
-    const checkInitialVoteState = async () => {
+    const checkInitialStates = async () => {
       if (!postUri || !session) return;
       
       const storedSession = getStoredSession();
       if (!storedSession) return;
 
       try {
+        // Check vote state
         const { data } = await supabase.functions.invoke('bluesky-votes', {
           body: {
             action: 'checkLikes',
@@ -81,12 +89,17 @@ export function PostCard({
             setVoteState('up');
           }
         }
+
+        // Check repost state
+        const repostStatus = await checkRepostStatus(postUri, session.did);
+        setIsReposted(repostStatus.isReposted);
+        setRepostUri(repostStatus.repostUri);
       } catch (error) {
-        console.error('Error checking vote state:', error);
+        console.error('Error checking initial states:', error);
       }
     };
 
-    checkInitialVoteState();
+    checkInitialStates();
   }, [postUri, session]);
 
   const handleVote = async (type: 'up' | 'down') => {
@@ -146,6 +159,36 @@ export function PostCard({
       setVoteState(voteState);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRepost = async () => {
+    if (!postUri || !session || repostLoading) return;
+    
+    setRepostLoading(true);
+    
+    try {
+      if (isReposted && repostUri) {
+        // Un-repost
+        const result = await deleteRepost(repostUri);
+        if (result.success) {
+          setIsReposted(false);
+          setRepostUri(undefined);
+          setReposts(reposts - 1);
+        }
+      } else {
+        // Repost
+        const result = await createRepost(postUri);
+        if (result.success) {
+          setIsReposted(true);
+          setRepostUri(result.repostUri);
+          setReposts(reposts + 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling repost:', error);
+    } finally {
+      setRepostLoading(false);
     }
   };
 
@@ -318,6 +361,21 @@ export function PostCard({
           <Button variant="ghost" size="sm" className="h-8 px-2 flex items-center space-x-1">
             <MessageCircle className="h-4 w-4" />
             <span className="text-xs">{comments}</span>
+          </Button>
+
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={cn(
+              "h-8 px-2 flex items-center space-x-1",
+              isReposted && "text-primary",
+              repostLoading && "opacity-50 cursor-not-allowed"
+            )}
+            onClick={handleRepost}
+            disabled={repostLoading || !session}
+          >
+            <Repeat2 className="h-4 w-4" />
+            <span className="text-xs">{reposts}</span>
           </Button>
 
           <Button variant="ghost" size="sm" className="h-8 px-2">

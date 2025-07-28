@@ -25,6 +25,7 @@ export interface TransformedPost {
   timestamp: string;
   upvotes: number;
   comments: number;
+  reposts: number;
   imageUrl?: string;
   videoUrl?: string;
   mediaAlt?: string;
@@ -112,6 +113,7 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
     timestamp: formatTimeAgo(post.record?.createdAt || post.indexedAt),
     upvotes: post.likeCount || 0,
     comments: post.replyCount || 0,
+    reposts: post.repostCount || 0,
     imageUrl,
     videoUrl,
     mediaAlt,
@@ -207,5 +209,54 @@ export const fetchPostsByHashtag = async (hashtag: string, limit: number = 30): 
   } catch (error) {
     console.error('Failed to fetch posts by hashtag:', error);
     return [];
+  }
+};
+
+export const createRepost = async (postUri: string): Promise<{ success: boolean; repostUri?: string }> => {
+  try {
+    const response = await agent.repost(postUri, postUri);
+    
+    return {
+      success: true,
+      repostUri: response.uri
+    };
+  } catch (error) {
+    console.error('Failed to create repost:', error);
+    return { success: false };
+  }
+};
+
+export const deleteRepost = async (repostUri: string): Promise<{ success: boolean }> => {
+  try {
+    await agent.deleteRepost(repostUri);
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to delete repost:', error);
+    return { success: false };
+  }
+};
+
+export const checkRepostStatus = async (postUri: string, userDid: string): Promise<{ isReposted: boolean; repostUri?: string }> => {
+  try {
+    // Get the user's reposts to check if they've reposted this post
+    const response = await agent.getAuthorFeed({ 
+      actor: userDid, 
+      limit: 50,
+      filter: 'posts_with_replies'
+    });
+    
+    // Look for a repost of this specific post
+    const repost = response.data.feed.find(item => 
+      item.reason?.$type === 'app.bsky.feed.defs#reasonRepost' && 
+      item.post.uri === postUri
+    );
+    
+    return {
+      isReposted: !!repost,
+      repostUri: repost ? `${userDid}/app.bsky.feed.repost/${Date.now()}` : undefined
+    };
+  } catch (error) {
+    console.error('Failed to check repost status:', error);
+    return { isReposted: false };
   }
 };
