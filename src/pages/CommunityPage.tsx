@@ -303,9 +303,12 @@ export function CommunityPage() {
 
                 {/* Community Details */}
                 <div className="flex-1 pt-2">
-                  <h1 className="text-2xl font-bold text-foreground mb-1">
-                    {community.display_name}
+                   <h1 className="text-2xl font-bold text-foreground mb-1">
+                     g/{community.name}
                    </h1>
+                   <p className="text-lg text-muted-foreground mb-1">
+                     {community.display_name}
+                   </p>
                    
                    {/* About Section */}
                    {community.description && (
@@ -369,9 +372,13 @@ export function CommunityPage() {
                          Join Community
                        </Button>
                      )}
-                    <Button variant="outline" size="sm">
-                      Create Post
-                    </Button>
+                     <Button 
+                       variant="outline" 
+                       size="sm"
+                       onClick={() => navigate(`/?tab=post&community=${community.name}`)}
+                     >
+                       Create Post
+                     </Button>
                   </div>
                 </div>
               </div>
@@ -386,9 +393,13 @@ export function CommunityPage() {
               {posts.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">No posts yet in this community</p>
-                  <Button variant="outline" className="mt-4">
-                    Be the first to post!
-                  </Button>
+                   <Button 
+                     variant="outline" 
+                     className="mt-4"
+                     onClick={() => navigate(`/?tab=post&community=${community.name}`)}
+                   >
+                     Be the first to post!
+                   </Button>
                 </div>
               ) : (
                 <div className="space-y-4">

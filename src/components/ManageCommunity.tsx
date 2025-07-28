@@ -32,6 +32,7 @@ import { toast } from "sonner";
 import { Settings, Users, Hash } from "lucide-react";
 import { CommunityMemberList } from "./CommunityMemberList";
 import { CommunityHashtags } from "./CommunityHashtags";
+import { ImageUpload } from "./ImageUpload";
 
 const communityFormSchema = z.object({
   display_name: z.string().min(1, "Community name is required"),
@@ -171,12 +172,30 @@ export function ManageCommunity({ community, onUpdate, children }: ManageCommuni
                   )}
                 />
 
+                <div className="grid grid-cols-2 gap-4">
+                  <ImageUpload
+                    bucketName="community-icons"
+                    currentImageUrl={community.icon_url || ""}
+                    onImageUploaded={(url) => form.setValue("icon_url", url)}
+                    label="Community Icon"
+                    maxSizeMB={2}
+                  />
+                  
+                  <ImageUpload
+                    bucketName="community-banners"
+                    currentImageUrl={community.banner_url || ""}
+                    onImageUploaded={(url) => form.setValue("banner_url", url)}
+                    label="Community Banner"
+                    maxSizeMB={5}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
                   name="icon_url"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Icon URL (optional)</FormLabel>
+                      <FormLabel>Icon URL (alternative)</FormLabel>
                       <FormControl>
                         <Input placeholder="https://example.com/icon.png" {...field} />
                       </FormControl>
@@ -190,7 +209,7 @@ export function ManageCommunity({ community, onUpdate, children }: ManageCommuni
                   name="banner_url"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Banner URL (optional)</FormLabel>
+                      <FormLabel>Banner URL (alternative)</FormLabel>
                       <FormControl>
                         <Input placeholder="https://example.com/banner.png" {...field} />
                       </FormControl>
