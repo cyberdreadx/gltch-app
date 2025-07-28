@@ -369,7 +369,13 @@ export function CommunityPage() {
               ) : (
                 <div className="space-y-4">
                   {posts.map((post) => (
-                    <PostCard key={post.id} {...post} />
+                    <PostCard 
+                      key={post.id} 
+                      {...post} 
+                      onPostDeleted={() => {
+                        setPosts(prev => prev.filter(p => p.id !== post.id));
+                      }}
+                    />
                   ))}
                   
                   {/* Loading indicator for infinite scroll */}

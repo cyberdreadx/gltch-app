@@ -509,3 +509,26 @@ export const createPost = async (text: string, images?: File[]): Promise<{ succe
     return { success: false };
   }
 };
+
+export const deletePost = async (postUri: string): Promise<{ success: boolean }> => {
+  try {
+    console.log('Deleting post:', postUri);
+    
+    // Extract the record key from the URI
+    // URI format: at://did:plc:xyz/app.bsky.feed.post/recordkey
+    const uriParts = postUri.split('/');
+    const recordKey = uriParts[uriParts.length - 1];
+    
+    await agent.api.com.atproto.repo.deleteRecord({
+      repo: agent.session?.did || '',
+      collection: 'app.bsky.feed.post',
+      rkey: recordKey,
+    });
+    
+    console.log('Post deleted successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to delete post:', error);
+    return { success: false };
+  }
+};

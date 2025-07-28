@@ -433,7 +433,13 @@ const Index = () => {
             ) : posts.length > 0 ? (
               <div className="space-y-4">
                 {posts.map((post) => (
-                  <PostCard key={post.id} {...post} />
+                  <PostCard 
+                    key={post.id} 
+                    {...post} 
+                    onPostDeleted={() => {
+                      setPosts(prev => prev.filter(p => p.id !== post.id));
+                    }}
+                  />
                 ))}
                 
                 {/* Loading indicator for infinite scroll */}
@@ -516,7 +522,13 @@ const Index = () => {
                 ) : trendingPosts.length > 0 ? (
                   <div className="space-y-4">
                     {trendingPosts.slice(0, 10).map((post) => (
-                      <PostCard key={post.id} {...post} />
+                      <PostCard 
+                        key={post.id} 
+                        {...post} 
+                        onPostDeleted={() => {
+                          setTrendingPosts(prev => prev.filter(p => p.id !== post.id));
+                        }}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -617,9 +629,15 @@ const Index = () => {
                      <div className="text-center text-muted-foreground">Loading your posts...</div>
                    ) : userPosts.length > 0 ? (
                      <div className="space-y-4">
-                       {userPosts.map((post) => (
-                         <PostCard key={post.id} {...post} />
-                       ))}
+                        {userPosts.map((post) => (
+                          <PostCard 
+                            key={post.id} 
+                            {...post} 
+                            onPostDeleted={() => {
+                              setUserPosts(prev => prev.filter(p => p.id !== post.id));
+                            }}
+                          />
+                        ))}
                        
                        {/* Loading indicator for infinite scroll */}
                        <div ref={userPostsLoadingRef} className="py-4 text-center">

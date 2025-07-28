@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getStoredSession } from "@/lib/atproto";
-import { createRepost, deleteRepost, checkRepostStatus } from "@/lib/bluesky";
+import { createRepost, deleteRepost, checkRepostStatus, deletePost } from "@/lib/bluesky";
 import { CommentThread } from "./CommentThread";
 
 interface PostCardProps {
@@ -29,6 +29,7 @@ interface PostCardProps {
   authorAvatar?: string;
   postUri?: string; // Bluesky post URI for voting
   postCid?: string; // Bluesky post CID for reposts
+  onPostDeleted?: () => void; // Callback when post is deleted
 }
 
 export function PostCard({
@@ -47,6 +48,7 @@ export function PostCard({
   authorAvatar,
   postUri,
   postCid,
+  onPostDeleted,
 }: PostCardProps) {
   const { session } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -58,6 +60,7 @@ export function PostCard({
   const [repostUri, setRepostUri] = useState<string | undefined>();
   const [showImageModal, setShowImageModal] = useState(false);
   const [showCommentThread, setShowCommentThread] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
 
@@ -204,6 +207,34 @@ export function PostCard({
     }
   };
 
+  const handleDeletePost = async () => {
+    if (!postUri || !session || deleteLoading) return;
+    
+    const storedSession = getStoredSession();
+    if (!storedSession) return;
+
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
+
+    setDeleteLoading(true);
+    
+    try {
+      const result = await deletePost(postUri);
+      if (result.success) {
+        onPostDeleted?.();
+      } else {
+        alert('Failed to delete post');
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      alert('Failed to delete post');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  // Check if current user is the author of this post
+  const isOwnPost = session?.handle === author || session?.did === author;
+
   // Intersection observer for video autoplay
   useEffect(() => {
     const video = videoRef.current;
@@ -271,9 +302,22 @@ export function PostCard({
             <span>•</span>
             <span>{timestamp}</span>
           </div>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-            <MoreHorizontal className="h-3 w-3" />
-          </Button>
+          {isOwnPost && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 w-6 p-0 text-destructive hover:text-destructive/80"
+              onClick={handleDeletePost}
+              disabled={deleteLoading}
+              title="Delete post"
+            >
+              {deleteLoading ? (
+                <div className="h-3 w-3 border border-destructive border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <MoreHorizontal className="h-3 w-3" />
+              )}
+            </Button>
+          )}
         </div>
 
         {/* Post Caption */}
