@@ -32,6 +32,7 @@ export interface TransformedPost {
   authorDisplayName?: string;
   authorAvatar?: string;
   postUri?: string; // Bluesky post URI for voting
+  postCid?: string; // Bluesky post CID for reposts
 }
 
 export interface ProfileData {
@@ -120,6 +121,7 @@ const transformBlueskyPost = (post: BlueskyPost): TransformedPost => {
     authorDisplayName: post.author.displayName,
     authorAvatar: post.author.avatar,
     postUri: post.uri, // Include Bluesky post URI for voting
+    postCid: post.cid, // Include Bluesky post CID for reposts
   };
 };
 
@@ -212,28 +214,15 @@ export const fetchPostsByHashtag = async (hashtag: string, limit: number = 30): 
   }
 };
 
-export const createRepost = async (postUri: string): Promise<{ success: boolean; repostUri?: string }> => {
+export const createRepost = async (postUri: string, postCid: string): Promise<{ success: boolean; repostUri?: string }> => {
   try {
-    // Parse the post URI to get the repo and rkey
-    const uriParts = postUri.split('/');
-    const repo = uriParts[2]; // did:plc:...
-    const rkey = uriParts[4]; // post ID
-    
-    const response = await agent.api.com.atproto.repo.createRecord({
-      repo: agent.session?.did || '',
-      collection: 'app.bsky.feed.repost',
-      record: {
-        subject: {
-          uri: postUri,
-          cid: '', // We don't have the CID, but it's not strictly required for reposts
-        },
-        createdAt: new Date().toISOString(),
-      },
-    });
+    console.log('Creating repost with:', { postUri, postCid });
+    const response = await agent.repost(postUri, postCid);
+    console.log('Repost response:', response);
     
     return {
       success: true,
-      repostUri: response.data.uri
+      repostUri: response.uri
     };
   } catch (error) {
     console.error('Failed to create repost:', error);
@@ -243,17 +232,8 @@ export const createRepost = async (postUri: string): Promise<{ success: boolean;
 
 export const deleteRepost = async (repostUri: string): Promise<{ success: boolean }> => {
   try {
-    // Parse the repost URI to get repo and rkey
-    const uriParts = repostUri.split('/');
-    const repo = uriParts[2];
-    const rkey = uriParts[4];
-    
-    await agent.api.com.atproto.repo.deleteRecord({
-      repo,
-      collection: 'app.bsky.feed.repost',
-      rkey,
-    });
-    
+    console.log('Deleting repost:', repostUri);
+    await agent.deleteRepost(repostUri);
     return { success: true };
   } catch (error) {
     console.error('Failed to delete repost:', error);

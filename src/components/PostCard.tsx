@@ -27,6 +27,7 @@ interface PostCardProps {
   authorDisplayName?: string;
   authorAvatar?: string;
   postUri?: string; // Bluesky post URI for voting
+  postCid?: string; // Bluesky post CID for reposts
 }
 
 export function PostCard({
@@ -44,6 +45,7 @@ export function PostCard({
   authorDisplayName,
   authorAvatar,
   postUri,
+  postCid,
 }: PostCardProps) {
   const { session } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -163,9 +165,12 @@ export function PostCard({
   };
 
   const handleRepost = async () => {
-    if (!postUri || !session || repostLoading) return;
+    if (!postUri || !postCid || !session || repostLoading) {
+      console.log('Missing required data for repost:', { postUri, postCid, session: !!session, repostLoading });
+      return;
+    }
     
-    console.log('Attempting repost:', { postUri, sessionDid: session.did, isReposted });
+    console.log('Attempting repost:', { postUri, postCid, sessionDid: session.did, isReposted });
     setRepostLoading(true);
     
     try {
@@ -181,8 +186,8 @@ export function PostCard({
         }
       } else {
         // Repost
-        console.log('Creating repost for:', postUri);
-        const result = await createRepost(postUri);
+        console.log('Creating repost for:', { postUri, postCid });
+        const result = await createRepost(postUri, postCid);
         console.log('Create repost result:', result);
         if (result.success) {
           setIsReposted(true);
