@@ -8,12 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 export function CreateCommunityPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, session } = useAuth();
+  const { isAuthenticated, user } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -60,7 +60,7 @@ export function CreateCommunityPage() {
     e.preventDefault();
     
     
-    if (!isAuthenticated || !session?.did) {
+    if (!isAuthenticated || !user?.id) {
       toast({
         title: "Authentication required",
         description: "Please sign in to create a community",
@@ -98,7 +98,7 @@ export function CreateCommunityPage() {
           description: formData.description || null,
           banner_url: formData.bannerUrl || null,
           icon_url: formData.iconUrl || null,
-          created_by: session.did, // Using did instead of user.id
+          created_by: user.id, // Using Supabase user ID
           member_count: 1, // Creator is the first member
           post_count: 0
         })
