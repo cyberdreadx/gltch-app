@@ -134,6 +134,11 @@ export function PostCard({
             setUpvotes(type === 'up' ? upvotes - 2 : upvotes + 2);
           }
         }
+      } else {
+        // Vote succeeded - create notification for upvotes (not self-votes)
+        // Note: For notifications we'd need the author's DID, which isn't available in current props
+        // This would need to be added to the PostCard props from the parent component
+        console.log('Vote successful, notification feature needs author DID to be implemented');
       }
     } catch (error) {
       console.error('Error voting:', error);

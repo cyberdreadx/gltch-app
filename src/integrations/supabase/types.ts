@@ -166,6 +166,51 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          from_user_avatar: string | null
+          from_user_handle: string | null
+          from_user_id: string | null
+          id: string
+          is_read: boolean
+          message: string
+          post_uri: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_user_avatar?: string | null
+          from_user_handle?: string | null
+          from_user_id?: string | null
+          id?: string
+          is_read?: boolean
+          message: string
+          post_uri?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_user_avatar?: string | null
+          from_user_handle?: string | null
+          from_user_id?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string
+          post_uri?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       post_engagement: {
         Row: {
           bluesky_likes: number | null

@@ -177,7 +177,7 @@ export const getCommunityHashtags = async (communityId: string): Promise<string[
 };
 
 // Helper functions
-const formatTimeAgo = (dateString: string): string => {
+export const formatTimeAgo = (dateString: string): string => {
   const now = new Date();
   const date = new Date(dateString);
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);

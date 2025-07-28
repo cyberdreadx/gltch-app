@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Menu, Bell, Search, UserPlus } from "lucide-react";
+import { NotificationBell } from "./NotificationBell";
 
 interface TopBarProps {
   title: string;
@@ -24,10 +25,7 @@ export function TopBar({ title, onMenuClick, isAuthenticated = false, onAuthClic
             <Search className="h-5 w-5" />
           </Button>
           {isAuthenticated ? (
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 relative">
-              <Bell className="h-5 w-5" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full"></div>
-            </Button>
+            <NotificationBell />
           ) : (
             <Button variant="default" size="sm" onClick={onAuthClick} className="h-8 px-3">
               <UserPlus className="h-4 w-4 mr-1" />
