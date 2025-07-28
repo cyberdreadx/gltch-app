@@ -34,6 +34,7 @@ export interface TransformedPost {
   postUri?: string; // Bluesky post URI for voting
   postCid?: string; // Bluesky post CID for reposts
   parentPost?: {
+    id?: string;
     title: string;
     author: string;
     authorDisplayName?: string;
@@ -191,6 +192,7 @@ export const fetchUserReplies = async (handle: string, limit: number = 5, cursor
               const parentPost = transformBlueskyPost(threadResponse.data.thread.post as BlueskyPost);
               // Add parent post info to the reply
               reply.parentPost = {
+                id: parentPost.id,
                 title: parentPost.title,
                 author: parentPost.author,
                 authorDisplayName: parentPost.authorDisplayName,

@@ -31,6 +31,7 @@ interface PostCardProps {
   postCid?: string; // Bluesky post CID for reposts
   onPostDeleted?: () => void; // Callback when post is deleted
   parentPost?: {
+    id?: string;
     title: string;
     author: string;
     authorDisplayName?: string;
@@ -306,29 +307,58 @@ export function PostCard({
                 </Link>
               </span>
             </div>
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground line-clamp-2">{parentPost.title}</p>
+            {parentPost.id ? (
+              <Link 
+                to={`/user/${parentPost.author}/post/${parentPost.id.split('/').pop()}`}
+                className="flex gap-3 hover:bg-muted/50 rounded p-2 -m-2 transition-colors"
+              >
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground line-clamp-2">{parentPost.title}</p>
+                </div>
+                {parentPost.imageUrl && (
+                  <div className="flex-shrink-0">
+                    <img 
+                      src={parentPost.imageUrl} 
+                      alt="Parent post image"
+                      className="w-16 h-16 rounded object-cover"
+                    />
+                  </div>
+                )}
+                {parentPost.videoUrl && (
+                  <div className="flex-shrink-0">
+                    <video 
+                      src={parentPost.videoUrl}
+                      className="w-16 h-16 rounded object-cover"
+                      muted
+                    />
+                  </div>
+                )}
+              </Link>
+            ) : (
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground line-clamp-2">{parentPost.title}</p>
+                </div>
+                {parentPost.imageUrl && (
+                  <div className="flex-shrink-0">
+                    <img 
+                      src={parentPost.imageUrl} 
+                      alt="Parent post image"
+                      className="w-16 h-16 rounded object-cover"
+                    />
+                  </div>
+                )}
+                {parentPost.videoUrl && (
+                  <div className="flex-shrink-0">
+                    <video 
+                      src={parentPost.videoUrl}
+                      className="w-16 h-16 rounded object-cover"
+                      muted
+                    />
+                  </div>
+                )}
               </div>
-              {parentPost.imageUrl && (
-                <div className="flex-shrink-0">
-                  <img 
-                    src={parentPost.imageUrl} 
-                    alt="Parent post image"
-                    className="w-16 h-16 rounded object-cover"
-                  />
-                </div>
-              )}
-              {parentPost.videoUrl && (
-                <div className="flex-shrink-0">
-                  <video 
-                    src={parentPost.videoUrl}
-                    className="w-16 h-16 rounded object-cover"
-                    muted
-                  />
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
       )}
