@@ -736,6 +736,22 @@ const Index = () => {
               </div>
             )}
           </div>
+         );
+      case 'post':
+        return (
+          <div className="p-2 md:p-4 lg:p-6 max-w-full overflow-x-hidden">
+            <div className="max-w-2xl mx-auto">
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-foreground mb-2">Create Post</h2>
+                {currentFeed.startsWith('g/') && currentFeed !== 'g/feed' && (
+                  <p className="text-muted-foreground">
+                    Posting to community: <span className="font-medium">{currentFeed}</span>
+                  </p>
+                )}
+              </div>
+              <CreatePost onPostCreated={() => loadPostsForFeed(currentFeed)} variant="normal" />
+            </div>
+          </div>
         );
       default:
         return null;
