@@ -433,3 +433,31 @@ export const createReplyToComment = async (
     return { success: false };
   }
 };
+
+export const createPost = async (text: string): Promise<{ success: boolean; postUri?: string }> => {
+  try {
+    console.log('Creating post:', { text });
+    
+    const record = {
+      $type: 'app.bsky.feed.post',
+      text: `${text}\n\n— via gltch.app`,
+      createdAt: new Date().toISOString(),
+    };
+
+    const response = await agent.api.com.atproto.repo.createRecord({
+      repo: agent.session?.did || '',
+      collection: 'app.bsky.feed.post',
+      record,
+    });
+    
+    console.log('Post created:', response);
+    
+    return {
+      success: true,
+      postUri: response.data.uri
+    };
+  } catch (error) {
+    console.error('Failed to create post:', error);
+    return { success: false };
+  }
+};

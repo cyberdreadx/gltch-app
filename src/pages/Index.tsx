@@ -15,6 +15,7 @@ import { fetchCustomFeed, registerAppUser } from "@/lib/customFeeds";
 import { FeedSelector } from "@/components/FeedSelector";
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { NotificationList } from "@/components/NotificationList";
+import { CreatePost } from "@/components/CreatePost";
 import { supabase } from "@/integrations/supabase/client";
 import { mockPosts, mockCommunities } from "@/data/mockData";
 import { ExternalLink, Settings } from "lucide-react";
@@ -425,6 +426,7 @@ const Index = () => {
                 onFeedChange={handleFeedChange}
                 userCommunities={userCommunities}
               />
+              <CreatePost onPostCreated={() => loadPostsForFeed(currentFeed)} />
             </div>
             {isLoadingPosts ? (
               <div className="text-center text-muted-foreground">Loading posts...</div>
@@ -527,13 +529,6 @@ const Index = () => {
                 )}
               </div>
             </div>
-          </div>
-        );
-      case 'post':
-        return (
-          <div className="p-6 text-center">
-            <h2 className="text-xl font-semibold text-foreground mb-2">Create Post</h2>
-            <p className="text-muted-foreground">Post creation interface coming soon</p>
           </div>
         );
       case 'inbox':
