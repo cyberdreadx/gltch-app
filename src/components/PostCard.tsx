@@ -35,6 +35,8 @@ interface PostCardProps {
     author: string;
     authorDisplayName?: string;
     authorAvatar?: string;
+    imageUrl?: string;
+    videoUrl?: string;
   };
 }
 
@@ -295,10 +297,38 @@ export function PostCard({
                 />
               )}
               <span className="text-xs text-muted-foreground">
-                Replying to <span className="font-medium">{parentPost.authorDisplayName || `@${parentPost.author}`}</span>
+                Replying to{' '}
+                <Link 
+                  to={`/user/${parentPost.author}`}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {parentPost.authorDisplayName || `@${parentPost.author}`}
+                </Link>
               </span>
             </div>
-            <p className="text-sm text-muted-foreground line-clamp-2">{parentPost.title}</p>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground line-clamp-2">{parentPost.title}</p>
+              </div>
+              {parentPost.imageUrl && (
+                <div className="flex-shrink-0">
+                  <img 
+                    src={parentPost.imageUrl} 
+                    alt="Parent post image"
+                    className="w-16 h-16 rounded object-cover"
+                  />
+                </div>
+              )}
+              {parentPost.videoUrl && (
+                <div className="flex-shrink-0">
+                  <video 
+                    src={parentPost.videoUrl}
+                    className="w-16 h-16 rounded object-cover"
+                    muted
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

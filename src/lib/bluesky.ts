@@ -38,6 +38,8 @@ export interface TransformedPost {
     author: string;
     authorDisplayName?: string;
     authorAvatar?: string;
+    imageUrl?: string;
+    videoUrl?: string;
   };
 }
 
@@ -192,7 +194,9 @@ export const fetchUserReplies = async (handle: string, limit: number = 5, cursor
                 title: parentPost.title,
                 author: parentPost.author,
                 authorDisplayName: parentPost.authorDisplayName,
-                authorAvatar: parentPost.authorAvatar
+                authorAvatar: parentPost.authorAvatar,
+                imageUrl: parentPost.imageUrl,
+                videoUrl: parentPost.videoUrl
               };
             }
           }
