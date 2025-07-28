@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getStoredSession } from "@/lib/atproto";
 import { createRepost, deleteRepost, checkRepostStatus } from "@/lib/bluesky";
+import { CommentThread } from "./CommentThread";
 
 interface PostCardProps {
   id: string;
@@ -56,6 +57,7 @@ export function PostCard({
   const [isReposted, setIsReposted] = useState(false);
   const [repostUri, setRepostUri] = useState<string | undefined>();
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showCommentThread, setShowCommentThread] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoAspectRatio, setVideoAspectRatio] = useState<number | null>(null);
 
@@ -368,7 +370,12 @@ export function PostCard({
         </div>
 
         <div className="flex items-center space-x-1">
-          <Button variant="ghost" size="sm" className="h-8 px-2 flex items-center space-x-1">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 px-2 flex items-center space-x-1"
+            onClick={() => setShowCommentThread(true)}
+          >
             <MessageCircle className="h-4 w-4" />
             <span className="text-xs">{comments}</span>
           </Button>
@@ -401,6 +408,16 @@ export function PostCard({
           alt={mediaAlt || "Post image"}
           isOpen={showImageModal}
           onClose={() => setShowImageModal(false)}
+        />
+      )}
+      
+      {/* Comment Thread Modal */}
+      {postUri && postCid && (
+        <CommentThread
+          postUri={postUri}
+          postCid={postCid}
+          isOpen={showCommentThread}
+          onClose={() => setShowCommentThread(false)}
         />
       )}
     </Card>

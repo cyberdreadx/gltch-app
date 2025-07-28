@@ -264,3 +264,77 @@ export const checkRepostStatus = async (postUri: string, userDid: string): Promi
     return { isReposted: false };
   }
 };
+
+export interface Reply {
+  uri: string;
+  cid: string;
+  author: {
+    did: string;
+    handle: string;
+    displayName?: string;
+    avatar?: string;
+  };
+  record: any;
+  indexedAt: string;
+  replyCount?: number;
+  likeCount?: number;
+  repostCount?: number;
+}
+
+export interface ThreadPost {
+  post: BlueskyPost;
+  replies?: ThreadPost[];
+}
+
+export const fetchPostThread = async (postUri: string): Promise<{ thread: ThreadPost | null }> => {
+  try {
+    const response = await agent.getPostThread({ uri: postUri });
+    
+    if (response.success && response.data.thread) {
+      return { thread: response.data.thread as ThreadPost };
+    }
+    
+    return { thread: null };
+  } catch (error) {
+    console.error('Failed to fetch post thread:', error);
+    return { thread: null };
+  }
+};
+
+export const createReply = async (postUri: string, postCid: string, text: string): Promise<{ success: boolean; replyUri?: string }> => {
+  try {
+    console.log('Creating reply:', { postUri, postCid, text });
+    
+    const record = {
+      $type: 'app.bsky.feed.post',
+      text,
+      reply: {
+        root: {
+          uri: postUri,
+          cid: postCid,
+        },
+        parent: {
+          uri: postUri,
+          cid: postCid,
+        },
+      },
+      createdAt: new Date().toISOString(),
+    };
+
+    const response = await agent.api.com.atproto.repo.createRecord({
+      repo: agent.session?.did || '',
+      collection: 'app.bsky.feed.post',
+      record,
+    });
+    
+    console.log('Reply created:', response);
+    
+    return {
+      success: true,
+      replyUri: response.data.uri
+    };
+  } catch (error) {
+    console.error('Failed to create reply:', error);
+    return { success: false };
+  }
+};
