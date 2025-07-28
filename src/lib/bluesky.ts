@@ -167,6 +167,23 @@ export const fetchUserPosts = async (handle: string, limit: number = 5, cursor?:
   }
 };
 
+export const fetchPost = async (handle: string, postId: string): Promise<TransformedPost | null> => {
+  try {
+    const response = await agent.api.app.bsky.feed.getPostThread({
+      uri: `at://${handle}/app.bsky.feed.post/${postId}`,
+      depth: 1,
+    });
+
+    if (response.data.thread && 'post' in response.data.thread) {
+      return transformBlueskyPost(response.data.thread.post as BlueskyPost);
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    return null;
+  }
+};
+
 export const fetchUserReplies = async (handle: string, limit: number = 5, cursor?: string): Promise<{ posts: TransformedPost[], cursor?: string }> => {
   try {
     const response = await agent.getAuthorFeed({ actor: handle, limit, cursor });
