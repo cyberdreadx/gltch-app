@@ -10,9 +10,9 @@ interface ExpandableAboutProps {
 export function ExpandableAbout({ description }: ExpandableAboutProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  // If description is short, don't need expansion
-  const isLongDescription = description.length > 150;
-  const previewText = isLongDescription ? description.slice(0, 150) + "..." : description;
+  // If description is short, don't need expansion  
+  const isLongDescription = description.length > 100;
+  const previewText = isLongDescription ? description.slice(0, 100) + "..." : description;
 
   return (
     <Card className="mb-3 bg-card/50 border-border/50">
