@@ -426,7 +426,7 @@ const Index = () => {
                 onFeedChange={handleFeedChange}
                 userCommunities={userCommunities}
               />
-              <CreatePost onPostCreated={() => loadPostsForFeed(currentFeed)} />
+              <CreatePost onPostCreated={() => loadPostsForFeed(currentFeed)} variant="floating" />
             </div>
             {isLoadingPosts ? (
               <div className="text-center text-muted-foreground">Loading posts...</div>
@@ -704,7 +704,7 @@ const Index = () => {
           
           {/* Show bottom nav only on mobile */}
           <div className="md:hidden">
-            <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+            <BottomNav activeTab={activeTab} onTabChange={setActiveTab} onPostCreated={() => loadPostsForFeed(currentFeed)} />
           </div>
         </div>
       </div>
