@@ -165,12 +165,15 @@ export function PostCard({
   const handleRepost = async () => {
     if (!postUri || !session || repostLoading) return;
     
+    console.log('Attempting repost:', { postUri, sessionDid: session.did, isReposted });
     setRepostLoading(true);
     
     try {
       if (isReposted && repostUri) {
         // Un-repost
+        console.log('Deleting repost:', repostUri);
         const result = await deleteRepost(repostUri);
+        console.log('Delete repost result:', result);
         if (result.success) {
           setIsReposted(false);
           setRepostUri(undefined);
@@ -178,7 +181,9 @@ export function PostCard({
         }
       } else {
         // Repost
+        console.log('Creating repost for:', postUri);
         const result = await createRepost(postUri);
+        console.log('Create repost result:', result);
         if (result.success) {
           setIsReposted(true);
           setRepostUri(result.repostUri);

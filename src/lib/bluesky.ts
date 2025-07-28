@@ -214,11 +214,26 @@ export const fetchPostsByHashtag = async (hashtag: string, limit: number = 30): 
 
 export const createRepost = async (postUri: string): Promise<{ success: boolean; repostUri?: string }> => {
   try {
-    const response = await agent.repost(postUri, postUri);
+    // Parse the post URI to get the repo and rkey
+    const uriParts = postUri.split('/');
+    const repo = uriParts[2]; // did:plc:...
+    const rkey = uriParts[4]; // post ID
+    
+    const response = await agent.api.com.atproto.repo.createRecord({
+      repo: agent.session?.did || '',
+      collection: 'app.bsky.feed.repost',
+      record: {
+        subject: {
+          uri: postUri,
+          cid: '', // We don't have the CID, but it's not strictly required for reposts
+        },
+        createdAt: new Date().toISOString(),
+      },
+    });
     
     return {
       success: true,
-      repostUri: response.uri
+      repostUri: response.data.uri
     };
   } catch (error) {
     console.error('Failed to create repost:', error);
@@ -228,7 +243,17 @@ export const createRepost = async (postUri: string): Promise<{ success: boolean;
 
 export const deleteRepost = async (repostUri: string): Promise<{ success: boolean }> => {
   try {
-    await agent.deleteRepost(repostUri);
+    // Parse the repost URI to get repo and rkey
+    const uriParts = repostUri.split('/');
+    const repo = uriParts[2];
+    const rkey = uriParts[4];
+    
+    await agent.api.com.atproto.repo.deleteRecord({
+      repo,
+      collection: 'app.bsky.feed.repost',
+      rkey,
+    });
+    
     return { success: true };
   } catch (error) {
     console.error('Failed to delete repost:', error);
@@ -238,22 +263,21 @@ export const deleteRepost = async (repostUri: string): Promise<{ success: boolea
 
 export const checkRepostStatus = async (postUri: string, userDid: string): Promise<{ isReposted: boolean; repostUri?: string }> => {
   try {
-    // Get the user's reposts to check if they've reposted this post
-    const response = await agent.getAuthorFeed({ 
-      actor: userDid, 
+    // Get user's reposts by listing records from their repost collection
+    const response = await agent.api.com.atproto.repo.listRecords({
+      repo: userDid,
+      collection: 'app.bsky.feed.repost',
       limit: 50,
-      filter: 'posts_with_replies'
     });
     
-    // Look for a repost of this specific post
-    const repost = response.data.feed.find(item => 
-      item.reason?.$type === 'app.bsky.feed.defs#reasonRepost' && 
-      item.post.uri === postUri
+    // Find a repost that matches the post URI
+    const repost = response.data.records.find((record: any) => 
+      record.value?.subject?.uri === postUri
     );
     
     return {
       isReposted: !!repost,
-      repostUri: repost ? `${userDid}/app.bsky.feed.repost/${Date.now()}` : undefined
+      repostUri: repost?.uri
     };
   } catch (error) {
     console.error('Failed to check repost status:', error);
