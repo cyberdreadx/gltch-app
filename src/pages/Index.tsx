@@ -14,6 +14,7 @@ import { fetchTimeline, fetchUserPosts, fetchProfile, fetchPublicFeed, type Tran
 import { fetchCustomFeed, registerAppUser } from "@/lib/customFeeds";
 import { FeedSelector } from "@/components/FeedSelector";
 import { ProfileSettings } from "@/components/ProfileSettings";
+import { NotificationList } from "@/components/NotificationList";
 import { supabase } from "@/integrations/supabase/client";
 import { mockPosts, mockCommunities } from "@/data/mockData";
 import { ExternalLink, Settings } from "lucide-react";
@@ -537,9 +538,11 @@ const Index = () => {
         );
       case 'inbox':
         return (
-          <div className="p-6 text-center">
-            <h2 className="text-xl font-semibold text-foreground mb-2">Inbox</h2>
-            <p className="text-muted-foreground">No new messages</p>
+          <div className="p-2 md:p-4 lg:p-6 max-w-full overflow-x-hidden">
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-foreground">Notifications</h2>
+            </div>
+            <NotificationList />
           </div>
         );
       case 'profile':
