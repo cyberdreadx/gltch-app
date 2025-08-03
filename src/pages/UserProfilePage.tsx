@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, UserPlus, UserMinus } from 'lucide-react';
+import { ArrowLeft, UserPlus, UserMinus, Edit, Settings, Share, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PostCard } from '@/components/PostCard';
@@ -198,19 +198,78 @@ export function UserProfilePage() {
                 </div>
               )}
               
-              <div className="flex gap-4 mt-3 text-sm text-muted-foreground">
-                <span className="whitespace-nowrap">{profile.followersCount || 0} followers</span>
-                <span className="whitespace-nowrap">{profile.followsCount || 0} following</span>
-                <span className="whitespace-nowrap">{profile.postsCount || 0} posts</span>
+              <div className="flex gap-4 mt-3 text-sm">
+                <div className="flex items-center gap-1">
+                  <span className="font-semibold text-foreground">{profile.followersCount || 0}</span>
+                  <span className="text-muted-foreground">followers</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="font-semibold text-foreground">{profile.followsCount || 0}</span>
+                  <span className="text-muted-foreground">following</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="font-semibold text-foreground">{profile.postsCount || 0}</span>
+                  <span className="text-muted-foreground">posts</span>
+                </div>
               </div>
             </div>
           </div>
           
+          {/* Social Actions Section - Reddit Inspired */}
+          {isOwnProfile && (
+            <div className="bg-card border rounded-lg p-4">
+              <h3 className="font-semibold text-sm text-muted-foreground mb-3">Quick Actions</h3>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" className="text-xs">
+                  <Edit className="h-3 w-3 mr-1" />
+                  Edit Profile
+                </Button>
+                <Button variant="outline" size="sm" className="text-xs">
+                  <Settings className="h-3 w-3 mr-1" />
+                  Settings
+                </Button>
+                <Button variant="outline" size="sm" className="text-xs">
+                  <Share className="h-3 w-3 mr-1" />
+                  Share Profile
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Communities Section - Reddit Inspired */}
+          <div className="bg-card border rounded-lg p-4">
+            <h3 className="font-semibold text-sm text-muted-foreground mb-3">
+              {isOwnProfile ? "My Communities" : "Communities"}
+            </h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Showing communities</span>
+                <span className="text-xs text-muted-foreground">View all</span>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 p-2 hover:bg-muted/50 rounded-md cursor-pointer">
+                  <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Hash className="h-3 w-3 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium">gltch</span>
+                  <span className="text-xs text-muted-foreground ml-auto">Owner</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Posts and Replies Section */}
           <Tabs defaultValue="posts" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="posts">Posts</TabsTrigger>
-              <TabsTrigger value="replies">Replies</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 bg-muted/30">
+              <TabsTrigger value="posts" className="text-xs font-medium">
+                Posts
+              </TabsTrigger>
+              <TabsTrigger value="replies" className="text-xs font-medium">
+                Replies
+              </TabsTrigger>
+              <TabsTrigger value="communities" className="text-xs font-medium">
+                Communities
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="posts" className="mt-4">
@@ -251,6 +310,36 @@ export function UserProfilePage() {
                   No replies yet
                 </div>
               )}
+            </TabsContent>
+            
+            <TabsContent value="communities" className="mt-4">
+              <div className="bg-card border rounded-lg p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm">Created Communities</h4>
+                    <span className="text-xs text-muted-foreground">1</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                      <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg flex items-center justify-center">
+                        <Hash className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h5 className="font-medium text-sm">gltch</h5>
+                        <p className="text-xs text-muted-foreground">The main community for gltch users</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span>1 member</span>
+                          <span>•</span>
+                          <span>Created recently</span>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-xs">
+                        Manage
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
